@@ -1,0 +1,222 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="./output.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+</head>
+<body>
+    <nav class="bg-white">
+        <div class="nav-container">
+            <div class="flex items-center justify-between w-full md:w-auto">
+                <a href="index.html">
+                    <img src="assets/images/logos/Logotipo - Versare - Marrom.png" alt="logo" class="w-[130px] h-auto">
+                </a>
+                <button class="mobile-menu-button" id="menuButton">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                    </svg>
+                </button>
+            </div>
+            <ul class="nav-menu" id="mobileMenu">
+                <li>
+                    <a href="index.html">Imóveis</a>
+                </li>
+                <li>
+                    <a href="">Lançamentos</a>
+                </li>
+                <li>
+                    <a href="">Venda</a>
+                </li>
+                <li>
+                    <a href="">Aluguel</a>
+                </li>
+                <li>
+                    <a href="booking.html">Contato</a>
+                </li>
+            </ul>
+            <div class="hidden md:block">
+                <a href="booking.html" class="flex items-center gap-[10px] rounded-full border border-[#000929] py-3 px-5">
+                    <img src="assets/images/icons/call.svg" class="w-6 h-6" alt="icon">
+                    <span class="font-semibold">Fale Conosco</span>
+                </a>
+            </div>
+        </div>
+        <!-- Menu Mobile -->
+        <div class="mobile-menu hidden" id="mobileMenuDropdown">
+            <a href="index.html">Imóveis</a>
+            <a href="">Lançamentos</a>
+            <a href="">Venda</a>
+            <a href="">Aluguel</a>
+            <a href="booking.html">Contato</a>
+            <a href="#" class="flex items-center justify-center gap-[10px] rounded-full border border-[#000929] py-3 px-5 mt-4 w-[80%]">
+                <img src="assets/images/icons/call.svg" class="w-6 h-6" alt="icon">
+                <span class="font-semibold">Fale Conosco</span>
+            </a>
+        </div>
+    </nav>
+    <div id="Banner" class="relative w-full h-[240px] flex items-center shrink-0 overflow-hidden -mb-[50px]">
+        <h1 class="text-center mx-auto font-extrabold text-[40px] leading-[60px] text-white mb-5 z-20">Entre em Contato Conosco</h1>
+        <div class="absolute w-full h-full bg-[linear-gradient(180deg,_rgba(0,0,0,0)_0%,#000000_91.83%)] z-10"></div>
+        <img src="assets/images/thumbnails/thumbnail-details-4.png" class="absolute w-full h-full object-cover object-top" alt="">
+    </div>
+    <form action="booking-finished.html" class="relative flex flex-col lg:flex-row justify-center max-w-[1130px] mx-auto gap-[30px] px-4 mb-20 z-20">
+        <div class="flex flex-col shrink-0 w-full lg:w-[500px] h-fit rounded-[20px] border border-[#E0DEF7] p-[30px] gap-[30px] bg-white">
+            <div class="flex items-center gap-4">
+                <img src="assets/images/logos/Logotipo - Versare - Marrom.png" class="h-12" alt="logo">
+                
+            </div>
+            <hr class="border-[#F6F5FD]">
+            <div class="flex flex-col gap-4">
+                <h2 class="font-bold">Preencha o Formulário</h2>
+                <div class="flex flex-col gap-2">
+                    <label for="name" class="font-semibold">Nome Completo</label>
+                    <div class="flex items-center rounded-full border border-[#000929] px-5 gap-[10px] transition-all duration-300 focus-within:ring-2 focus-within:ring-[#142a3d]">
+                        <img src="assets/images/icons/security-user-black.svg" class="w-6 h-6" alt="icon">
+                        <input type="text" name="name" id="name" class="appearance-none outline-none w-full py-3 font-semibold placeholder:font-normal placeholder:text-[#000929]" placeholder="Digite seu nome completo">
+                    </div>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label for="email" class="font-semibold">E-mail</label>
+                    <div class="flex items-center rounded-full border border-[#000929] px-5 gap-[10px] transition-all duration-300 focus-within:ring-2 focus-within:ring-[#142a3d]">
+                        <img src="assets/images/icons/iconemail.svg" class="w-6 h-6" alt="icon">
+                        <input type="email" name="email" id="email" class="appearance-none outline-none w-full py-3 font-semibold placeholder:font-normal placeholder:text-[#000929]" placeholder="Digite seu e-mail">
+                    </div>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label for="phone" class="font-semibold">Número de Telefone</label>
+                    <div class="flex items-center rounded-full border border-[#000929] px-5 gap-[10px] transition-all duration-300 focus-within:ring-2 focus-within:ring-[#142a3d]">
+                        <img src="assets/images/icons/call-black.svg" class="w-6 h-6" alt="icon">
+                        <input type="tel" name="phone" id="phone" class="appearance-none outline-none w-full py-3 font-semibold placeholder:font-normal placeholder:text-[#000929]" placeholder="Digite seu número">
+                    </div>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label for="message" class="font-semibold">Mensagem</label>
+                    <div class="flex items-start rounded-[20px] border border-[#000929] px-5 py-3 gap-[10px] transition-all duration-300 focus-within:ring-2 focus-within:ring-[#142a3d]">
+                        <img src="assets/images/icons/mensagem.svg" class="w-6 h-6 mt-2" alt="icon">
+                        <textarea name="message" id="message" rows="4" class="appearance-none outline-none w-full py-1 font-semibold placeholder:font-normal placeholder:text-[#000929]" placeholder="Escreva sua mensagem ou dúvida"></textarea>
+                    </div>
+                </div>
+            </div>
+            <hr class="border-[#F6F5FD]">
+            <div class="flex items-center gap-3">
+                <img src="assets/images/icons/shield-tick.svg" class="w-[30px] h-[30px]" alt="icon">
+                <p class="font-semibold leading-[28px]">Seus dados estão protegidos e não serão compartilhados com terceiros.</p>
+            </div>
+            <button type="submit" class="flex items-center justify-center w-full rounded-full p-[16px_26px] gap-3 bg-[#142a3d] font-bold text-[#F7F7FD]">
+                <span>Enviar Mensagem</span>
+            </button>
+        </div>
+        <div class="flex flex-col shrink-0 w-full lg:w-[400px] h-fit rounded-[20px] border border-[#E0DEF7] p-[30px] gap-[30px] bg-white">
+            <h2 class="font-bold">Informações de Contato</h2>
+            <div class="flex flex-col gap-5">
+                <div class="flex items-start gap-3">
+                    <img src="assets/images/icons/location.svg" class="w-6 h-6 mt-1" alt="icon">
+                    <div>
+                        <p class="font-bold">Endereço</p>
+                        <p>Rua José Alves de Souza, 111 E , centro  Tangará da Serra , MT. CEP 78300-110 </p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <img src="assets/images/icons/call-black.svg" class="w-6 h-6 mt-1" alt="icon">
+                    <div>
+                        <p class="font-bold">Telefone</p>
+                        <p>(65) 99844-1316 </p>
+                     
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <img src="assets/images/icons/iconemail.svg" class="w-6 h-6 mt-1" alt="icon">
+                    <div>
+                        <p class="font-bold">E-mail</p>
+                        <p>versareimoveis@gmail.com  </p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <img src="assets/images/icons/clock.svg" class="w-6 h-6 mt-1" alt="icon">
+                    <div>
+                        <p class="font-bold">Horário de Atendimento</p>
+                        <p>Segunda a Sexta: 9h às 18h</p>
+                        <p>Sábado: 9h às 13h</p>
+                    </div>
+                </div>
+            </div>
+            <hr class="border-[#F6F5FD]">
+            <h2 class="font-bold">Siga-nos nas Redes Sociais</h2>
+            <div class="flex gap-4 justify-center">
+                <a href="https://www.instagram.com/versare_imoveis/" class="w-10 h-10 flex items-center justify-center rounded-full bg-[#142a3d]">
+                    <img src="assets/images/icons/instagramlogomono.jpeg" class="w-5 h-5" alt="social">
+                </a>
+                <a href="https://wa.me/5565998441316" class="w-10 h-10 flex items-center justify-center rounded-full bg-[#142a3d]">
+                    <img src="assets/images/icons/logowhatsmono.png" class="w-5 h-5" alt="social">
+                </a>
+                <!-- <a href="#" class="w-10 h-10 flex items-center justify-center rounded-full bg-[#142a3d]">
+                    <img src="assets/images/icons/youtube.svg" class="w-5 h-5" alt="social">
+                </a>
+                <a href="#" class="w-10 h-10 flex items-center justify-center rounded-full bg-[#142a3d]">
+                    <img src="assets/images/icons/linkedin.svg" class="w-5 h-5" alt="social">
+                </a> -->
+            </div>
+        </div>
+    </form>
+    <section id="Evaluation-Banner" class="w-full mx-auto mt-[70px] lg:mt-[100px] overflow-hidden bg-[#f7f7fd]"
+    style="background-color: rgb(10, 10, 49); padding: 0; gap: 30px;">
+    <footer class="bg-[#0C1E2C] text-white py-10">
+        <div class="w-full max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center gap-8">
+
+            <!-- Logo e Endereço -->
+            <div class="flex flex-1 items-center">
+                <img src="assets/images/logos/simbcreme.png" alt="Versare Imóveis" class="w-32 object-contain mr-4">
+                <div>
+                    <h2 class="text-2xl font-bold">VERSARE IMÓVEIS</h2>
+                    <p>Rua José Alves de Souza, 111 E</p>
+                    <p>Centro - Tangará da Serra / MT</p>
+                    <p>CEP: 78300-110</p>
+                </div>
+            </div>
+
+            <!-- Redes Sociais -->
+            <div class="flex flex-3 flex-col text-left">
+                <h3 class="font-semibold mb-2">
+                    Siga-nos nas <span class="text-white font-bold">Redes Sociais</span>
+                </h3>
+                <div class="flex justify-center gap-4">
+                    <a href="https://www.instagram.com/versare_imoveis/" target="_blank">
+                        <img src="assets/images/icons/instagramlogomono.jpeg" alt="Instagram" class="w-6 h-6" />
+                    </a>
+                    <a href="https://wa.me/5565998441316" target="_blank">
+                        <img src="assets/images/icons/logowhatsmono.png" alt="WhatsApp" class="w-6 h-6" />
+                    </a>
+                </div>
+            </div>
+
+            <!-- Contatos -->
+            <div class="flex flex-1 flex-col text-center">
+                <h3 class="font-semibold mb-2">Nossos <span class="text-white font-bold">Contatos</span></h3>
+                <p>Email: <a href="mailto:versareimoveis@gmail.com"
+                        class="text-green-400">versareimoveis@gmail.com</a></p>
+                <p>WhatsApp: <a href="https://wa.me/5565998441316" class="text-green-400">(65) 99844-1316</a></p>
+                <p>Fixo: (65) 99844-1316</p>
+            </div>
+
+        </div>
+
+        <div class="text-center mt-10 text-sm text-white/60">
+            <p>Versare Imóveis - © 2025 Todos os Direitos Reservados</p>
+        </div>
+    </footer>
+</section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuButton = document.getElementById('menuButton');
+            const mobileMenuDropdown = document.getElementById('mobileMenuDropdown');
+            
+            menuButton.addEventListener('click', function() {
+                mobileMenuDropdown.classList.toggle('hidden');
+            });
+        });
+    </script>
+</body>
+</html>

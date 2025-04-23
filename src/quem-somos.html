@@ -1,0 +1,151 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="./output.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+</head>
+<body>
+    <nav class="bg-white">
+        <div class="nav-container">
+            <div class="flex items-center justify-between w-full md:w-auto">
+                <a href="index.html">
+                    <img src="assets/images/logos/Logotipo - Versare - Marrom.png" alt="logo" class="w-[130px] h-auto">
+                </a>
+                <button class="mobile-menu-button" id="menuButton">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                    </svg>
+                </button>
+            </div>
+            <ul class="nav-menu" id="mobileMenu">
+                <li>
+                    <a href="index.html">Imóveis</a>
+                </li>
+                <li>
+                    <a href="lancamentos.html">Lançamentos</a>
+                </li>
+                <li>
+                    <a href="venda.html">Venda</a>
+                </li>
+                <li>
+                    <a href="aluguel.html">Aluguel</a>
+                </li>
+                <li>
+                    <a href="quem-somos.html" class="font-bold">Quem Somos</a>
+                </li>
+            </ul>
+            <div class="hidden md:block">
+                <a href="booking.html" class="flex items-center gap-[10px] rounded-full border border-[#000929] py-3 px-5">
+                    <img src="assets/images/icons/call.svg" class="w-6 h-6" alt="icon">
+                    <span class="font-semibold">Fale Conosco</span>
+                </a>
+            </div>
+        </div>
+        <!-- Menu Mobile -->
+        <div class="mobile-menu hidden" id="mobileMenuDropdown">
+            <a href="index.html">Imóveis</a>
+            <a href="lancamentos.html">Lançamentos</a>
+            <a href="venda.html">Venda</a>
+            <a href="aluguel.html">Aluguel</a>
+            <a href="quem-somos.html" class="font-bold">Quem Somos</a>
+            <a href="booking.html" class="flex items-center justify-center gap-[10px] rounded-full border border-[#000929] py-3 px-5 mt-4 w-[80%]">
+                <img src="assets/images/icons/call.svg" class="w-6 h-6" alt="icon">
+                <span class="font-semibold">Fale Conosco</span>
+            </a>
+        </div>
+    </nav>
+    <div id="Banner" class="relative w-full h-[240px] flex items-center shrink-0 overflow-hidden -mb-[50px]">
+        <h1 class="text-center mx-auto font-extrabold text-[40px] leading-[60px] text-white mb-5 z-20">Conheça a Versare Imóveis</h1>
+        <div class="absolute w-full h-full bg-[linear-gradient(180deg,_rgba(0,0,0,0)_0%,#000000_91.83%)] z-10"></div>
+        <img src="assets/images/thumbnails/thumbnail-details-5.png" class="absolute w-full h-full object-cover object-top" alt="">
+    </div>
+    <section class="relative flex flex-col w-full max-w-[930px] gap-[30px] mx-auto mb-[100px] z-20 mt-[100px]">
+       <!-- Sessão 01: Conheça nossa história -->
+    <div class="flex flex-col rounded-[20px] border border-[#E0DEF7] p-[30px] gap-[30px] bg-white">
+        <img src="assets/images/logos/Logotipo - Versare - Marrom.png"
+        alt="Logotipo Versare"
+        class="max-w-[280px] w-full h-auto mx-auto" />
+        <h2 class="font-bold text-[32px] leading-[48px]">Conheça nossa história</h2>
+        <p class="leading-[28px]">A Versare é uma empresa do setor imobiliário que atua em Tangará da Serra e região, oferecendo serviços completos para quem deseja comprar, vender, regularizar ou administrar imóveis.</p>
+        <p class="leading-[28px]">Fundada por Ana Paula, uma profissional experiente que domina todas as etapas do processo imobiliário, e por William, investidor do ramo, a empresa se destaca pela transparência, inovação e compromisso com a excelência.</p>
+        <p class="leading-[28px]">Com um nome que remete à transformação, a Versare tem como missão ajudar seus clientes a transformar sonhos em negócios, proporcionando segurança e confiança em todas as transações imobiliárias.</p>
+    </div>
+
+    <!-- Sessão 02: Ana Paula -->
+    <div class="flex flex-col rounded-[20px] border border-[#E0DEF7] p-[30px] gap-[30px] bg-white items-center text-center">
+        <div class="w-full max-w-[250px] h-auto overflow-hidden rounded-xl border border-[#ccc] bg-white">
+            <img src="assets/images/photos/anapaulapro.jpg" alt="Ana Paula Alves de Souza" class="w-full h-auto object-contain" />
+        </div>
+        <div class="max-w-3xl mt-6 text-left">
+            <h2 class="font-bold text-[28px] leading-[42px] text-center">Ana Paula Alves de Souza</h2>
+            <p class="text-[#142a3d] font-medium text-center mb-4">Sócia proprietária</p>
+            <p class="leading-[28px] mb-3">Natural de Tangará da Serra - MT, Formada em Administração em Pequenas e Médias Empresas pela Universidade Anhanguera – Uniderp em 2019, trabalhou em algumas empresas na área de vendas e área administrativa.</p>
+            <p class="leading-[28px] mb-3">Desde 2020 vem atuando no mercado imobiliário ajudando uma empresa na administração de imóveis próprios na compra, reforma e venda de imóveis.</p>
+            <p class="leading-[28px]">Atua como corretora de imóveis desde março de 2023 (CRECI-MT nº 15.097), uma profissional experiente que domina todas as etapas do processo imobiliário, sempre com transparência, inovação e compromisso com a excelência.</p>
+        </div>
+    </div>
+</div>
+</section>
+    
+<section id="Evaluation-Banner" class="w-full mx-auto mt-[70px] lg:mt-[100px] overflow-hidden bg-[#f7f7fd]"
+style="background-color: rgb(10, 10, 49); padding: 0; gap: 30px;">
+<footer class="bg-[#0C1E2C] text-white py-10">
+    <div class="w-full max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center gap-8">
+
+        <!-- Logo e Endereço -->
+        <div class="flex flex-1 items-center">
+            <img src="assets/images/logos/simbcreme.png" alt="Versare Imóveis" class="w-32 object-contain mr-4">
+            <div>
+                <h2 class="text-2xl font-bold">VERSARE IMÓVEIS</h2>
+                <p>Rua José Alves de Souza, 111 E</p>
+                <p>Centro - Tangará da Serra / MT</p>
+                <p>CEP: 78300-110</p>
+            </div>
+        </div>
+
+        <!-- Redes Sociais -->
+        <div class="flex flex-3 flex-col text-left">
+            <h3 class="font-semibold mb-2">
+                Siga-nos nas <span class="text-white font-bold">Redes Sociais</span>
+            </h3>
+            <div class="flex justify-center gap-4">
+                <a href="https://www.instagram.com/versare_imoveis/" target="_blank">
+                    <img src="assets/images/icons/instagramlogomono.jpeg" alt="Instagram" class="w-6 h-6" />
+                </a>
+                <a href="https://wa.me/5565998441316" target="_blank">
+                    <img src="assets/images/icons/logowhatsmono.png" alt="WhatsApp" class="w-6 h-6" />
+                </a>
+            </div>
+        </div>
+
+        <!-- Contatos -->
+        <div class="flex flex-1 flex-col text-center">
+            <h3 class="font-semibold mb-2">Nossos <span class="text-white font-bold">Contatos</span></h3>
+            <p>Email: <a href="mailto:versareimoveis@gmail.com"
+                    class="text-green-400">versareimoveis@gmail.com</a></p>
+            <p>WhatsApp: <a href="https://wa.me/5565998441316" class="text-green-400">(65) 99844-1316</a></p>
+            <p>Fixo: (65) 99844-1316</p>
+        </div>
+
+    </div>
+
+    <div class="text-center mt-10 text-sm text-white/60">
+        <p>Versare Imóveis - © 2025 Todos os Direitos Reservados</p>
+    </div>
+</footer>
+</section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuButton = document.getElementById('menuButton');
+            const mobileMenuDropdown = document.getElementById('mobileMenuDropdown');
+            
+            menuButton.addEventListener('click', function() {
+                mobileMenuDropdown.classList.toggle('hidden');
+            });
+        });
+    </script>
+</body>
+</html> 
