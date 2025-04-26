@@ -14,48 +14,82 @@ let currentPage = 1; // Página atual
 
 // Função para carregar imóveis em destaque na página inicial
 async function loadFeaturedProperties() {
-  try {
-    const response = await fetch('/api/admin/properties');
-    const properties = await response.json();
+    try {
+        const response = await fetch('/api/admin/properties');
+        const properties = await response.json();
 
-    const cardsGrid = document.querySelector('.cards-grid');
-    if (!cardsGrid) return;
+        const cardsGrid = document.querySelector('.cards-grid');
+        if (!cardsGrid) return;
 
-    // Limpa o conteúdo atual
-    cardsGrid.innerHTML = '';
+        // Limpa o conteúdo atual
+        cardsGrid.innerHTML = '<div class="text-center w-full col-span-3">Carregando imóveis em destaque...</div>';
 
-    // Filtra apenas os imóveis marcados como destaque (se necessário)
-    // e limita a 6 imóveis
-    const featuredProperties = properties.slice(0, 6);
+        // Filtra apenas os imóveis marcados como destaque (se necessário)
+        // e limita a 6 imóveis
+        let featuredProperties = properties.slice(0, 6);
 
-    featuredProperties.forEach(property => {
-      const card = document.createElement('div');
-      card.className = 'card';
-      
-      // Formata o preço em reais
-      const price = new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
-      }).format(property.price || 0);
+        // Busca as imagens de cada imóvel em uma única requisição (com Promise.all)
+        featuredProperties = await Promise.all(
+            featuredProperties.map(async(property) => {
+                try {
+                    const imagesResponse = await fetch(`/api/properties/${property.id}`);
+                    if (imagesResponse.ok) {
+                        const propertyData = await imagesResponse.json();
+                        // Adiciona as imagens ao objeto de propriedade
+                        if (propertyData.images && propertyData.images.length > 0) {
+                            property.images = propertyData.images;
+                            property.imageUrl = propertyData.images[0].image_url;
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`Erro ao buscar imagens do imóvel ${property.id}:`, error);
+                }
+                return property;
+            })
+        );
 
-      // Verifica se as propriedades existem antes de acessá-las
-      const images = property.images || [];
-      const address = property.address || {};
-      const propertyId = property.id || '';
-      const propertyTitle = property.title || 'Imóvel sem título';
-      const propertyType = property.type || 'venda';
-      const propertyCode = property.code || 'Sem código';
-      const propertyNeighborhood = property.neighborhood || 'Sem bairro';
-      const propertyCity = property.city || 'Sem cidade';
+        // Limpa o conteúdo atual
+        cardsGrid.innerHTML = '';
 
-      card.innerHTML = `
+        if (featuredProperties.length === 0) {
+            cardsGrid.innerHTML = '<div class="text-center w-full col-span-3">Nenhum imóvel em destaque encontrado.</div>';
+            return;
+        }
+
+        featuredProperties.forEach(property => {
+            const card = document.createElement('div');
+            card.className = 'card';
+
+            // Formata o preço em reais
+            const price = new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(property.price || 0);
+
+            // Determina a URL da imagem
+            let imageUrl = 'assets/images/thumbnails/thumbnails-1.png'; // Imagem padrão
+            if (property.imageUrl) {
+                imageUrl = property.imageUrl;
+            } else if (property.images && property.images.length > 0) {
+                imageUrl = property.images[0].image_url || property.images[0] || 'assets/images/thumbnails/thumbnails-1.png';
+            }
+
+            // Verifica se as propriedades existem antes de acessá-las
+            const propertyId = property.id || '';
+            const propertyTitle = property.title || 'Imóvel sem título';
+            const propertyType = property.type || 'venda';
+            const propertyCode = property.code || 'Sem código';
+            const propertyNeighborhood = property.neighborhood || 'Sem bairro';
+            const propertyCity = property.city || 'Sem cidade';
+
+            card.innerHTML = `
         <a href="details.html?id=${propertyId}" class="card">
             <div class="flex flex-col rounded-[20px] border border-[#E0DEF7] bg-white overflow-hidden h-full">
                 <div class="thumbnail-container relative w-full h-[200px]">
                     <p class="btn-tag">
                         ${propertyType === 'aluguel' ? 'Aluguel' : 'Venda'}
                     </p>
-                    <img src="${images[0] || 'assets/images/thumbnails/thumbnails-1.png'}" class="w-full h-full object-cover" alt="thumbnails">
+                    <img src="${imageUrl}" class="w-full h-full object-cover" alt="${propertyTitle}">
                 </div>
                 <div class="card-detail-container flex flex-col p-5 pb-[30px] gap-4">
                     <h3 class="line-clamp-2 font-bold text-[22px] leading-[36px] h-[72px]">${propertyTitle}</h3>
@@ -74,88 +108,88 @@ async function loadFeaturedProperties() {
             </div>
         </a>
       `;
-      
-      cardsGrid.appendChild(card);
-    });
 
-  } catch (error) {
-    console.error('Erro ao carregar imóveis:', error);
-    const cardsGrid = document.querySelector('.cards-grid');
-    if (cardsGrid) {
-      cardsGrid.innerHTML = '<div class="text-center w-full col-span-3">Erro ao carregar imóveis. Por favor, tente novamente mais tarde.</div>';
+            cardsGrid.appendChild(card);
+        });
+
+    } catch (error) {
+        console.error('Erro ao carregar imóveis:', error);
+        const cardsGrid = document.querySelector('.cards-grid');
+        if (cardsGrid) {
+            cardsGrid.innerHTML = '<div class="text-center w-full col-span-3">Erro ao carregar imóveis. Por favor, tente novamente mais tarde.</div>';
+        }
     }
-  }
 }
 
 // Função para carregar imóveis por tipo (venda, aluguel, lançamento)
 async function loadPropertiesByType() {
-  try {
-    console.log('Iniciando carregamento de imóveis...'); // Debug
+    try {
+        console.log('Iniciando carregamento de imóveis...'); // Debug
 
-    const response = await fetch('/api/admin/properties');
-    const properties = await response.json();
+        const response = await fetch('/api/admin/properties');
+        const properties = await response.json();
 
-    console.log('Dados recebidos:', properties); // Debug
+        console.log('Dados recebidos:', properties); // Debug
 
-    // Encontra o grid em qualquer uma das páginas usando a classe específica
-    const cardsGrid = document.querySelector('.properties-grid');
-    if (!cardsGrid) {
-      console.error('Grid não encontrado');
-      return;
-    }
+        // Encontra o grid em qualquer uma das páginas usando a classe específica
+        const cardsGrid = document.querySelector('.properties-grid');
+        if (!cardsGrid) {
+            console.error('Grid não encontrado');
+            return;
+        }
 
-    console.log('Grid encontrado:', cardsGrid); // Debug
+        console.log('Grid encontrado:', cardsGrid); // Debug
 
-    // Limpa o conteúdo atual
-    cardsGrid.innerHTML = '';
+        // Limpa o conteúdo atual
+        cardsGrid.innerHTML = '';
 
-    // Se não houver imóveis, mostra mensagem
-    if (!properties || properties.length === 0) {
-      cardsGrid.innerHTML = '<div class="text-center w-full col-span-3">Nenhum imóvel encontrado.</div>';
-        return;
-      }
-      
-    // Filtra os imóveis baseado na página atual
-    let filteredProperties = properties;
-    const currentPage = window.location.pathname;
+        // Se não houver imóveis, mostra mensagem
+        if (!properties || properties.length === 0) {
+            cardsGrid.innerHTML = '<div class="text-center w-full col-span-3">Nenhum imóvel encontrado.</div>';
+            return;
+        }
 
-    if (currentPage.includes('venda.html')) {
-      filteredProperties = properties.filter(prop => prop.type === 'venda');
-    } else if (currentPage.includes('aluguel.html')) {
-      filteredProperties = properties.filter(prop => prop.type === 'aluguel');
-    } else if (currentPage.includes('lancamentos.html')) {
-      filteredProperties = properties.filter(prop => prop.type === 'lancamento');
-    }
+        // Filtra os imóveis baseado na página atual
+        let filteredProperties = properties;
+        const currentPage = window.location.pathname;
 
-    console.log('Imóveis filtrados:', filteredProperties); // Debug
+        if (currentPage.includes('venda.html')) {
+            filteredProperties = properties.filter(prop => prop.type === 'venda');
+        } else if (currentPage.includes('aluguel.html')) {
+            filteredProperties = properties.filter(prop => prop.type === 'aluguel');
+        } else if (currentPage.includes('lancamentos.html')) {
+            filteredProperties = properties.filter(prop => prop.type === 'lancamento');
+        }
 
-    if (filteredProperties.length === 0) {
-      cardsGrid.innerHTML = '<div class="text-center w-full col-span-3">Nenhum imóvel encontrado para esta categoria.</div>';
-      return;
-    }
+        console.log('Imóveis filtrados:', filteredProperties); // Debug
 
-    filteredProperties.forEach(property => {
-      // Formata o preço em reais
-      let price = new Intl.NumberFormat('pt-BR', {
-          style: 'currency',
-          currency: 'BRL'
-      }).format(property.price || 0);
-        
-      // Adiciona sufixos baseado no tipo
-        if (property.type === 'aluguel') {
-        price += '/mês';
-        } else if (property.type === 'lancamento') {
-        price = 'A partir de ' + price;
-      }
+        if (filteredProperties.length === 0) {
+            cardsGrid.innerHTML = '<div class="text-center w-full col-span-3">Nenhum imóvel encontrado para esta categoria.</div>';
+            return;
+        }
 
-      const typeText = {
-        'aluguel': 'Aluguel',
-        'venda': 'Venda',
-        'lancamento': 'Lançamento'
-      }[property.type] || 'Venda';
+        filteredProperties.forEach(property => {
+            // Formata o preço em reais
+            let price = new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(property.price || 0);
 
-      const card = document.createElement('div');
-      card.innerHTML = `
+            // Adiciona sufixos baseado no tipo
+            if (property.type === 'aluguel') {
+                price += '/mês';
+            } else if (property.type === 'lancamento') {
+                price = 'A partir de ' + price;
+            }
+
+            const typeText = {
+                'aluguel': 'Aluguel',
+                'venda': 'Venda',
+                'lancamento': 'Lançamento'
+            }[property.type] || 'Venda';
+
+            const card = document.createElement('div');
+            card.innerHTML = `
         <a href="details.html?id=${property.id || ''}" class="card">
           <div class="flex flex-col rounded-[20px] border border-[#E0DEF7] bg-white overflow-hidden h-full">
             <div class="thumbnail-container relative w-full h-[200px]">
@@ -185,17 +219,17 @@ async function loadPropertiesByType() {
           </div>
         </a>
       `;
-      
-      cardsGrid.appendChild(card);
-    });
 
-  } catch (error) {
-    console.error('Erro ao carregar imóveis:', error);
-    const cardsGrid = document.querySelector('.properties-grid');
-    if (cardsGrid) {
-      cardsGrid.innerHTML = '<div class="text-center w-full col-span-3">Erro ao carregar imóveis. Por favor, tente novamente mais tarde.</div>';
+            cardsGrid.appendChild(card);
+        });
+
+    } catch (error) {
+        console.error('Erro ao carregar imóveis:', error);
+        const cardsGrid = document.querySelector('.properties-grid');
+        if (cardsGrid) {
+            cardsGrid.innerHTML = '<div class="text-center w-full col-span-3">Erro ao carregar imóveis. Por favor, tente novamente mais tarde.</div>';
+        }
     }
-  }
 }
 
 // Função para carregar detalhes de um imóvel específico
@@ -203,40 +237,84 @@ async function loadPropertyDetails() {
     try {
         // Verificar se estamos na página de detalhes
         if (!window.location.pathname.includes('details.html')) return;
-        
+
         // Obter o ID do imóvel da URL
         const urlParams = new URLSearchParams(window.location.search);
         const propertyId = urlParams.get('id');
-        
+
         if (!propertyId) {
             console.error('ID do imóvel não encontrado na URL');
             window.location.href = 'index.html';
             return;
         }
-        
+
         // Mostrar indicador de carregamento
         const detailsContainer = document.querySelector('.property-details-container');
         if (detailsContainer) {
             detailsContainer.innerHTML = '<div class="text-center w-full py-8">Carregando detalhes do imóvel...</div>';
         }
-        
+
         // Buscar todos os imóveis
         const response = await fetch('/api/admin/properties');
         if (!response.ok) {
             throw new Error('Erro ao buscar imóveis');
         }
-        
+
         const properties = await response.json();
-        
+
         // Encontrar o imóvel específico pelo ID
         const property = properties.find(p => {
             const pId = String(p.id || p._id);
             const searchId = String(propertyId);
             return pId === searchId;
         });
-        
+
         if (!property) {
             throw new Error('Imóvel não encontrado');
+        }
+
+        // Buscar detalhes específicos do imóvel (imagens, vídeos, comodidades)
+        try {
+            const detailsResponse = await fetch(`/api/properties/${propertyId}`);
+            if (detailsResponse.ok) {
+                const propertyDetails = await detailsResponse.json();
+
+                // Mesclar os detalhes com o objeto de propriedade
+                if (propertyDetails.images && propertyDetails.images.length > 0) {
+                    property.images = propertyDetails.images.map(img => img.image_url || img);
+                }
+
+                if (propertyDetails.videos && propertyDetails.videos.length > 0) {
+                    property.videos = propertyDetails.videos;
+                }
+
+                if (propertyDetails.amenities && propertyDetails.amenities.length > 0) {
+                    property.amenities = propertyDetails.amenities.map(amenity => amenity.name || amenity);
+                }
+            }
+        } catch (error) {
+            console.warn('Erro ao buscar detalhes extras do imóvel:', error);
+            // Continua mesmo se falhar, apenas com os dados básicos
+        }
+
+        // Buscar diretamente as comodidades (property_amenities) do imóvel
+        try {
+            const amenitiesResponse = await fetch(`/api/properties/${propertyId}/amenities`);
+            if (amenitiesResponse.ok) {
+                const amenitiesData = await amenitiesResponse.json();
+                if (amenitiesData && amenitiesData.length > 0) {
+                    property.amenities = property.amenities || [];
+                    // Adiciona as comodidades da nova consulta, evitando duplicação
+                    amenitiesData.forEach(amenity => {
+                        const amenityName = amenity.name || amenity;
+                        if (!property.amenities.includes(amenityName)) {
+                            property.amenities.push(amenityName);
+                        }
+                    });
+                }
+            }
+        } catch (error) {
+            console.warn('Erro ao buscar comodidades do imóvel:', error);
         }
 
         // Obter o template
@@ -244,13 +322,13 @@ async function loadPropertyDetails() {
         if (!template) {
             throw new Error('Template não encontrado');
         }
-        
+
         // Clonar o template
         const content = template.content.cloneNode(true);
-        
+
         // Preencher o template com os dados do imóvel
         updatePropertyDetailsUI(content, property);
-        
+
         // Limpar o container e adicionar o conteúdo
         if (detailsContainer) {
             detailsContainer.innerHTML = '';
@@ -258,26 +336,15 @@ async function loadPropertyDetails() {
         } else {
             console.error('Container de detalhes não encontrado');
         }
-        
-        // Adicionar eventos para as miniaturas de imagens após adicionar o conteúdo ao DOM
-        setTimeout(() => {
-            const thumbnails = document.querySelectorAll('.property-thumbnails div img');
-            const mainImage = document.querySelector('.property-main-image');
-            
-            if (thumbnails.length > 0 && mainImage) {
-                thumbnails.forEach(thumb => {
-                    thumb.addEventListener('click', () => {
-                        mainImage.src = thumb.src;
-                    });
-                });
-            }
-            
-            // Adicionar evento para o formulário de contato
-            const contactForm = document.querySelector('.property-details-container form');
-            if (contactForm) {
-                contactForm.addEventListener('submit', handleContactFormSubmit);
-            }
-        }, 100);
+
+        // Inicializar o Swiper para as imagens
+        initializePropertySwiper(property);
+
+        // Adicionar evento para o formulário de contato
+        const contactForm = document.querySelector('.property-details-container form');
+        if (contactForm) {
+            contactForm.addEventListener('submit', handleContactFormSubmit);
+        }
 
     } catch (error) {
         console.error('Erro ao carregar detalhes do imóvel:', error);
@@ -296,18 +363,171 @@ async function loadPropertyDetails() {
     }
 }
 
+// Função para inicializar o Swiper com imagens e vídeos
+function initializePropertySwiper(property) {
+    // Preparar os slides
+    const swiperWrapper = document.querySelector('.swiper-wrapper');
+    if (!swiperWrapper) return;
+
+    swiperWrapper.innerHTML = '';
+
+    // Adicionar slides de imagens
+    if (property.images && property.images.length > 0) {
+        property.images.forEach((image, index) => {
+            const slide = document.createElement('div');
+            slide.className = 'swiper-slide';
+            slide.innerHTML = `<img src="${image}" alt="${property.title || 'Imóvel'} - Imagem ${index + 1}" class="w-full h-full object-cover">`;
+            swiperWrapper.appendChild(slide);
+        });
+    } else {
+        // Imagem padrão se não houver imagens
+        const slide = document.createElement('div');
+        slide.className = 'swiper-slide';
+        slide.innerHTML = `<img src="assets/images/thumbnails/thumbnails-1.png" alt="Imagem padrão" class="w-full h-full object-cover">`;
+        swiperWrapper.appendChild(slide);
+    }
+
+    // Adicionar slides de vídeos
+    if (property.videos && property.videos.length > 0) {
+        property.videos.forEach((video, index) => {
+            if (video.video_url && (video.video_url.includes('youtube.com') || video.video_url.includes('youtu.be'))) {
+                // Extrair ID do vídeo do YouTube
+                let videoId = '';
+                if (video.video_url.includes('youtube.com/watch?v=')) {
+                    videoId = video.video_url.split('watch?v=')[1].split('&')[0];
+                } else if (video.video_url.includes('youtu.be/')) {
+                    videoId = video.video_url.split('youtu.be/')[1];
+                } else if (video.video_url.includes('youtube.com/embed/')) {
+                    videoId = video.video_url.split('embed/')[1];
+                }
+
+                if (videoId) {
+                    const slide = document.createElement('div');
+                    slide.className = 'swiper-slide';
+                    slide.innerHTML = `
+                        <iframe 
+                            width="100%" 
+                            height="100%" 
+                            src="https://www.youtube.com/embed/${videoId}" 
+                            title="${video.title || 'Vídeo do imóvel'}" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen
+                        ></iframe>
+                    `;
+                    swiperWrapper.appendChild(slide);
+                }
+            }
+        });
+    }
+
+    // Atualizar as miniaturas
+    updateThumbnails(property);
+
+    // Inicializar o Swiper
+    if (window.Swiper) {
+        const swiper = new Swiper('.propertySwiper', {
+            slidesPerView: 1,
+            spaceBetween: 30,
+            loop: false,
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+        });
+    } else {
+        console.error('Swiper não disponível');
+    }
+}
+
+// Função para atualizar as miniaturas
+function updateThumbnails(property) {
+    const thumbnailsContainer = document.querySelector('.property-thumbnails');
+    if (!thumbnailsContainer) return;
+
+    thumbnailsContainer.innerHTML = '';
+
+    // Adicionar miniaturas de imagens
+    if (property.images && property.images.length > 0) {
+        property.images.forEach((image, index) => {
+            const thumbnail = document.createElement('div');
+            thumbnail.className = index === 0 ? 'thumbnail thumbnail-active' : 'thumbnail';
+            thumbnail.innerHTML = `<img src="${image}" alt="${property.title || 'Imóvel'} - Miniatura ${index + 1}" class="w-full h-full object-cover">`;
+            thumbnail.dataset.index = index;
+            thumbnailsContainer.appendChild(thumbnail);
+        });
+    }
+
+    // Adicionar miniaturas de vídeos
+    if (property.videos && property.videos.length > 0) {
+        property.videos.forEach((video, index) => {
+            if (video.video_url && (video.video_url.includes('youtube.com') || video.video_url.includes('youtu.be'))) {
+                // Extrair ID do vídeo
+                let videoId = '';
+                if (video.video_url.includes('youtube.com/watch?v=')) {
+                    videoId = video.video_url.split('watch?v=')[1].split('&')[0];
+                } else if (video.video_url.includes('youtu.be/')) {
+                    videoId = video.video_url.split('youtu.be/')[1];
+                } else if (video.video_url.includes('youtube.com/embed/')) {
+                    videoId = video.video_url.split('embed/')[1];
+                }
+
+                if (videoId) {
+                    const thumbnail = document.createElement('div');
+                    thumbnail.className = 'thumbnail';
+                    thumbnail.innerHTML = `
+                        <img src="https://img.youtube.com/vi/${videoId}/mqdefault.jpg" 
+                            alt="${video.title || 'Vídeo do imóvel'}" 
+                            class="w-full h-full object-cover">
+                        <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                    `;
+                    thumbnail.dataset.index = property.images ? property.images.length + index : index;
+                    thumbnailsContainer.appendChild(thumbnail);
+                }
+            }
+        });
+    }
+
+    // Adicionar eventos para as miniaturas
+    const thumbnails = thumbnailsContainer.querySelectorAll('.thumbnail');
+    if (thumbnails.length > 0) {
+        thumbnails.forEach(thumb => {
+            thumb.addEventListener('click', () => {
+                // Remover classe ativa de todas as miniaturas
+                thumbnails.forEach(t => t.classList.remove('thumbnail-active'));
+
+                // Adicionar classe ativa na miniatura clicada
+                thumb.classList.add('thumbnail-active');
+
+                // Mudar o slide atual
+                if (window.swiper) {
+                    window.swiper.slideTo(parseInt(thumb.dataset.index));
+                }
+            });
+        });
+    }
+}
+
 // Função para atualizar a UI com os detalhes do imóvel
 function updatePropertyDetailsUI(content, property) {
     // Atualizar título e tipo
     content.querySelector('.property-title').textContent = property.title || 'Sem título';
     content.querySelector('.property-type').textContent = formatPropertyType(property.type);
-    
+
     // Atualizar preço
     const price = new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL'
     }).format(property.price || 0);
-  
+
     let displayPrice = price;
     if (property.type === 'aluguel') {
         displayPrice += '/mês';
@@ -315,70 +535,54 @@ function updatePropertyDetailsUI(content, property) {
         displayPrice = 'A partir de ' + price;
     }
     content.querySelector('.property-price').textContent = displayPrice;
-    
+
     // Atualizar código e localização
     content.querySelector('.property-code').textContent = `CÓD. ${property.code || 'N/A'}`;
     content.querySelector('.property-location').textContent = `${property.neighborhood || ''} - ${property.city || ''}`;
-    
+
     // Atualizar descrição
     content.querySelector('.property-description').textContent = property.description || 'Sem descrição disponível';
-    
+
     // Atualizar características
     content.querySelector('.property-bedrooms').textContent = property.bedrooms || '0';
     content.querySelector('.property-bathrooms').textContent = property.bathrooms || '0';
-    content.querySelector('.property-parking').textContent = property.parkingSpots || '0';
+    content.querySelector('.property-parking').textContent = property.parking_spaces || property.parkingSpots || '0';
     content.querySelector('.property-area').textContent = `${property.area || '0'} m²`;
     content.querySelector('.property-suites').textContent = property.suites || '0';
     content.querySelector('.property-furnished').textContent = property.furnished ? 'Sim' : 'Não';
-    
-    // Atualizar imagens
-    const mainImage = content.querySelector('.property-main-image');
-    const thumbnailsContainer = content.querySelector('.property-thumbnails');
-    
-    if (property.images && property.images.length > 0) {
-        mainImage.src = property.images[0];
-        mainImage.alt = property.title;
-        
-        // Limpar e adicionar thumbnails
-        thumbnailsContainer.innerHTML = '';
-        property.images.forEach((image, index) => {
-            const thumbnail = document.createElement('div');
-            thumbnail.className = 'w-full h-20 cursor-pointer';
-            thumbnail.innerHTML = `
-                <img src="${image}" alt="${property.title} - Imagem ${index + 1}" 
-                     class="w-full h-full object-cover rounded-lg">
-            `;
-            thumbnail.addEventListener('click', () => {
-                mainImage.src = image;
-            });
-            thumbnailsContainer.appendChild(thumbnail);
-        });
-    }
-    
+
     // Atualizar comodidades
     const amenitiesContainer = content.querySelector('.property-amenities');
-    if (amenitiesContainer && property.amenities && property.amenities.length > 0) {
+    if (amenitiesContainer) {
         amenitiesContainer.innerHTML = '';
-        property.amenities.forEach(amenity => {
-            const amenityDiv = document.createElement('div');
-            amenityDiv.className = 'flex items-center gap-2';
-            amenityDiv.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#142a3d]" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                </svg>
-                <span>${amenity}</span>
-            `;
-            amenitiesContainer.appendChild(amenityDiv);
-        });
+
+        if (property.amenities && property.amenities.length > 0) {
+            property.amenities.forEach(amenity => {
+                const amenityName = typeof amenity === 'object' ? (amenity.name || '') : amenity;
+                if (amenityName && amenityName.trim() !== '') {
+                    const amenityDiv = document.createElement('div');
+                    amenityDiv.className = 'flex items-center gap-2';
+                    amenityDiv.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#142a3d]" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                        <span>${amenityName}</span>
+                    `;
+                    amenitiesContainer.appendChild(amenityDiv);
+                }
+            });
+        } else {
+            amenitiesContainer.innerHTML = '<div class="text-gray-600">Nenhuma comodidade cadastrada</div>';
+        }
     }
-    
+
     // Adicionar ID do imóvel ao formulário de contato
     const contactForm = content.querySelector('form');
     if (contactForm) {
         const hiddenInput = document.createElement('input');
         hiddenInput.type = 'hidden';
         hiddenInput.name = 'property_id';
-        hiddenInput.value = property._id;
+        hiddenInput.value = property.id || property._id;
         contactForm.appendChild(hiddenInput);
     }
 }
@@ -386,31 +590,31 @@ function updatePropertyDetailsUI(content, property) {
 // Função para lidar com o envio do formulário de contato
 async function handleContactFormSubmit(event) {
     event.preventDefault();
-    
+
     const form = event.target;
     const name = form.querySelector('#name').value;
     const email = form.querySelector('#email').value;
     const phone = form.querySelector('#phone').value;
     const message = form.querySelector('#message').value;
-    const propertyId = form.querySelector('input[name="property_id"]')?.value;
-    const propertyTitle = document.querySelector('.property-title')?.textContent || 'Imóvel';
-    const propertyCode = document.querySelector('.property-code')?.textContent?.replace('CÓD. ', '') || '';
-    const propertyType = document.querySelector('.property-type')?.textContent || '';
-    const propertyPrice = document.querySelector('.property-price')?.textContent || '';
-    
+    const propertyId = form.querySelector('input[name="property_id"]').value;
+    const propertyTitle = document.querySelector('.property-title').textContent || 'Imóvel';
+    const propertyCode = document.querySelector('.property-code').textContent.replace('CÓD. ', '') || '';
+    const propertyType = document.querySelector('.property-type').textContent || '';
+    const propertyPrice = document.querySelector('.property-price').textContent || '';
+
     // Validar campos obrigatórios
     if (!name || !email || !phone || !message) {
         alert('Por favor, preencha todos os campos obrigatórios.');
         return;
     }
-    
+
     // Desabilitar o botão de envio e mostrar carregamento
     const submitButton = form.querySelector('button[type="submit"]');
     if (submitButton) {
         submitButton.disabled = true;
         submitButton.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Enviando...';
     }
-    
+
     try {
         // 1. Primeiro, salvar a mensagem no banco de dados
         const saveResponse = await fetch('/api/whatsapp-message', {
@@ -429,28 +633,28 @@ async function handleContactFormSubmit(event) {
                 property_price: parseFloat(propertyPrice.replace(/[^\d,]/g, '').replace(',', '.')) || 0
             })
         });
-        
+
         if (!saveResponse.ok) {
             throw new Error('Erro ao salvar a mensagem. Por favor, tente novamente.');
         }
-        
+
         // 2. Buscar número de WhatsApp da imobiliária
         const settingsResponse = await fetch('/api/admin/settings');
         if (!settingsResponse.ok) {
             throw new Error('Erro ao obter configurações. Por favor, tente novamente mais tarde.');
         }
-        
+
         const settings = await settingsResponse.json();
         let whatsappNumber = settings.whatsapp || '5511999999999';
-        
+
         // Remover caracteres não numéricos
         whatsappNumber = whatsappNumber.replace(/\D/g, '');
-        
+
         // Se o número não começar com 55 (Brasil), adicionar
         if (!whatsappNumber.startsWith('55')) {
             whatsappNumber = '55' + whatsappNumber;
         }
-        
+
         // Criar texto da mensagem
         const whatsappText = encodeURIComponent(
             `Olá! Estou interessado no imóvel ${propertyCode} - ${propertyTitle}.\n\n` +
@@ -459,13 +663,13 @@ async function handleContactFormSubmit(event) {
             `Telefone: ${phone}\n\n` +
             `Mensagem: ${message}`
         );
-        
+
         // Redirecionar para WhatsApp
         window.open(`https://wa.me/${whatsappNumber}?text=${whatsappText}`, '_blank');
-        
+
         // Resetar o formulário
         form.reset();
-        
+
         // Reabilitar o botão
         if (submitButton) {
             submitButton.disabled = false;
@@ -477,7 +681,7 @@ async function handleContactFormSubmit(event) {
     } catch (error) {
         console.error('Erro ao processar envio de mensagem:', error);
         alert(error.message);
-        
+
         // Reabilitar o botão
         if (submitButton) {
             submitButton.disabled = false;
@@ -488,48 +692,48 @@ async function handleContactFormSubmit(event) {
 
 // Função auxiliar para formatar o tipo de imóvel
 function formatPropertyType(type) {
-  const types = {
-    'venda': 'Venda',
-    'aluguel': 'Aluguel',
-    'lancamento': 'Lançamento'
-  };
-  
-  return types[type] || type;
+    const types = {
+        'venda': 'Venda',
+        'aluguel': 'Aluguel',
+        'lancamento': 'Lançamento'
+    };
+
+    return types[type] || type;
 }
 
 // Função para carregar estatísticas de imóveis
 function loadPropertyStats() {
-  const statsSection = document.getElementById('property-stats');
-  
-  if (!statsSection) return;
-  
-  fetch(`${API_BASE_URL}/stats`)
-    .then(response => response.json())
-    .then(data => {
-      // Atualizar contadores
-      if (data.total_properties) {
-        const totalCounter = document.getElementById('total-properties');
-        if (totalCounter) totalCounter.textContent = data.total_properties;
-      }
-      
-      if (data.total_sales) {
-        const salesCounter = document.getElementById('total-sales');
-        if (salesCounter) salesCounter.textContent = data.total_sales;
-      }
-      
-      if (data.total_rentals) {
-        const rentalsCounter = document.getElementById('total-rentals');
-        if (rentalsCounter) rentalsCounter.textContent = data.total_rentals;
-      }
-      
-      if (data.total_launches) {
-        const launchesCounter = document.getElementById('total-launches');
-        if (launchesCounter) launchesCounter.textContent = data.total_launches;
-      }
-    })
-    .catch(error => {
-      console.error('Erro ao carregar estatísticas:', error);
-    });
+    const statsSection = document.getElementById('property-stats');
+
+    if (!statsSection) return;
+
+    fetch(`${API_BASE_URL}/stats`)
+        .then(response => response.json())
+        .then(data => {
+            // Atualizar contadores
+            if (data.total_properties) {
+                const totalCounter = document.getElementById('total-properties');
+                if (totalCounter) totalCounter.textContent = data.total_properties;
+            }
+
+            if (data.total_sales) {
+                const salesCounter = document.getElementById('total-sales');
+                if (salesCounter) salesCounter.textContent = data.total_sales;
+            }
+
+            if (data.total_rentals) {
+                const rentalsCounter = document.getElementById('total-rentals');
+                if (rentalsCounter) rentalsCounter.textContent = data.total_rentals;
+            }
+
+            if (data.total_launches) {
+                const launchesCounter = document.getElementById('total-launches');
+                if (launchesCounter) launchesCounter.textContent = data.total_launches;
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar estatísticas:', error);
+        });
 }
 
 // Função para carregar e exibir imóveis
@@ -569,7 +773,7 @@ async function loadProperties() {
 
         // Busca as imagens de cada imóvel em uma única requisição (com Promise.all)
         currentProperties = await Promise.all(
-            currentProperties.map(async (property) => {
+            currentProperties.map(async(property) => {
                 try {
                     const imagesResponse = await fetch(`/api/properties/${property.id}`);
                     if (imagesResponse.ok) {
@@ -595,7 +799,7 @@ async function loadProperties() {
 
         // Exibe os imóveis (inicialmente sem filtros) com paginação
         displayProperties(currentProperties);
-        
+
     } catch (error) {
         console.error('Erro ao carregar imóveis:', error);
         const grid = document.querySelector('.properties-grid');
@@ -625,33 +829,33 @@ function setupFilterEvents() {
 
 // Função para aplicar os filtros
 function applyFilters() {
-    const location = document.querySelector('select[name="location"]')?.value;
-    const propertyType = document.querySelector('select[name="propertyType"]')?.value;
-    const priceRange = document.querySelector('select[name="priceRange"]')?.value;
-    const bedrooms = document.querySelector('select[name="bedrooms"]')?.value;
-    const area = document.querySelector('select[name="area"]')?.value;
-    const propertyCode = document.querySelector('input[name="code"]')?.value;
+    const location = document.querySelector('select[name="location"]').value;
+    const propertyType = document.querySelector('select[name="propertyType"]').value;
+    const priceRange = document.querySelector('select[name="priceRange"]').value;
+    const bedrooms = document.querySelector('select[name="bedrooms"]').value;
+    const area = document.querySelector('select[name="area"]').value;
+    const propertyCode = document.querySelector('input[name="code"]').value;
 
     let filteredProperties = [...currentProperties];
 
     // Filtra por código do imóvel
     if (propertyCode && propertyCode.trim() !== '') {
-        filteredProperties = filteredProperties.filter(property => 
-            property.code?.toLowerCase().includes(propertyCode.toLowerCase())
+        filteredProperties = filteredProperties.filter(property =>
+            property.code.toLowerCase().includes(propertyCode.toLowerCase())
         );
     }
 
     // Filtra por localização
     if (location) {
-        filteredProperties = filteredProperties.filter(property => 
-            property.neighborhood?.toLowerCase().includes(location.toLowerCase())
+        filteredProperties = filteredProperties.filter(property =>
+            property.neighborhood.toLowerCase().includes(location.toLowerCase())
         );
     }
 
     // Filtra por tipo de imóvel
     if (propertyType) {
-        filteredProperties = filteredProperties.filter(property => 
-            property.property_type?.toLowerCase() === propertyType.toLowerCase()
+        filteredProperties = filteredProperties.filter(property =>
+            property.property_type.toLowerCase() === propertyType.toLowerCase()
         );
     }
 
@@ -659,7 +863,7 @@ function applyFilters() {
     if (priceRange) {
         filteredProperties = filteredProperties.filter(property => {
             const price = property.price || 0;
-            switch(priceRange) {
+            switch (priceRange) {
                 case 'ate-500k':
                     return price <= 500000;
                 case '500k-1m':
@@ -678,7 +882,7 @@ function applyFilters() {
     if (bedrooms) {
         filteredProperties = filteredProperties.filter(property => {
             const beds = property.bedrooms || 0;
-            switch(bedrooms) {
+            switch (bedrooms) {
                 case '1-dorm':
                     return beds === 1;
                 case '2-dorm':
@@ -697,7 +901,7 @@ function applyFilters() {
     if (area) {
         filteredProperties = filteredProperties.filter(property => {
             const propertyArea = property.area || 0;
-            switch(area) {
+            switch (area) {
                 case 'ate-50':
                     return propertyArea <= 50;
                 case '50-100':
@@ -714,7 +918,7 @@ function applyFilters() {
 
     // Reset para a primeira página quando filtrar
     currentPage = 1;
-    
+
     // Exibe os imóveis filtrados
     displayProperties(filteredProperties);
 }
@@ -741,7 +945,7 @@ function displayProperties(properties) {
     // Calcula os índices inicial e final para a página atual
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, properties.length);
-    
+
     // Obtém apenas os imóveis da página atual
     const paginatedProperties = properties.slice(startIndex, endIndex);
 
@@ -830,10 +1034,10 @@ function displayProperties(properties) {
                 </div>
             </a>
         `;
-        
+
         grid.appendChild(cardDiv);
     });
-    
+
     // Atualiza a paginação
     updatePagination(properties.length);
 }
@@ -842,7 +1046,7 @@ function displayProperties(properties) {
 function updatePagination(totalItems) {
     // Busca o container de paginação
     let paginationContainer = document.querySelector('.flex.items-center.justify-center.gap-2.mt-\\[50px\\]');
-    
+
     // Se não encontrou o container de paginação, retorna
     if (!paginationContainer) {
         console.error('Container de paginação não encontrado');
@@ -851,19 +1055,19 @@ function updatePagination(totalItems) {
 
     // Calcula o número total de páginas
     const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-    
+
     // Se não houver páginas suficientes, não exibe a paginação
     if (totalPages <= 1) {
         paginationContainer.style.display = 'none';
         return;
     }
-    
+
     // Exibe o container de paginação
     paginationContainer.style.display = 'flex';
-    
+
     // Limpa o conteúdo atual da paginação
     paginationContainer.innerHTML = '';
-    
+
     // Adiciona botão "Anterior" se não estiver na primeira página
     if (currentPage > 1) {
         const prevButton = document.createElement('a');
@@ -877,23 +1081,23 @@ function updatePagination(totalItems) {
         });
         paginationContainer.appendChild(prevButton);
     }
-    
+
     // Determina quais números de página mostrar
     const maxVisiblePages = 5;
     let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
     let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    
+
     // Ajusta o intervalo se estiver próximo ao início ou fim
     if (endPage - startPage + 1 < maxVisiblePages) {
         startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
-    
+
     // Adiciona a primeira página e reticências se necessário
     if (startPage > 1) {
         // Primeira página
         const firstPageBtn = createPageButton(1);
         paginationContainer.appendChild(firstPageBtn);
-        
+
         // Reticências se houver mais de uma página entre a primeira e o início do intervalo
         if (startPage > 2) {
             const ellipsis = document.createElement('span');
@@ -902,13 +1106,13 @@ function updatePagination(totalItems) {
             paginationContainer.appendChild(ellipsis);
         }
     }
-    
+
     // Adiciona os botões para as páginas no intervalo calculado
     for (let i = startPage; i <= endPage; i++) {
         const pageBtn = createPageButton(i);
         paginationContainer.appendChild(pageBtn);
     }
-    
+
     // Adiciona a última página e reticências se necessário
     if (endPage < totalPages) {
         // Reticências se houver mais de uma página entre o fim do intervalo e a última
@@ -918,12 +1122,12 @@ function updatePagination(totalItems) {
             ellipsis.textContent = '...';
             paginationContainer.appendChild(ellipsis);
         }
-        
+
         // Última página
         const lastPageBtn = createPageButton(totalPages);
         paginationContainer.appendChild(lastPageBtn);
     }
-    
+
     // Adiciona botão "Próximo" se não estiver na última página
     if (currentPage < totalPages) {
         const nextButton = document.createElement('a');
@@ -937,51 +1141,51 @@ function updatePagination(totalItems) {
         });
         paginationContainer.appendChild(nextButton);
     }
-    
+
     // Função auxiliar para criar um botão de página
     function createPageButton(pageNum) {
         const button = document.createElement('a');
         button.href = 'javascript:void(0)';
         button.className = `flex items-center justify-center w-10 h-10 rounded-full ${pageNum === currentPage ? 'bg-[#142a3d] text-white' : 'border border-[#E0DEF7]'} font-bold`;
         button.textContent = pageNum;
-        
+
         if (pageNum !== currentPage) {
             button.addEventListener('click', () => {
                 currentPage = pageNum;
                 displayProperties(currentProperties);
             });
         }
-        
+
         return button;
     }
 }
 
 // Configurar carregamento de imóveis quando o DOM estiver pronto
 document.addEventListener('DOMContentLoaded', function() {
-  // Carregar imóveis em destaque na página inicial
-  if (window.location.pathname.endsWith('index.html') || window.location.pathname === '/') {
-  loadFeaturedProperties();
-  } else if (
-    window.location.pathname.includes('venda.html') ||
-    window.location.pathname.includes('aluguel.html') ||
-    window.location.pathname.includes('lancamentos.html')
-  ) {
-    loadPropertiesByType();
-  }
-  
-  // Carregar detalhes do imóvel na página de detalhes
-  loadPropertyDetails();
-  
-  // Carregar estatísticas de imóveis
-  loadPropertyStats();
-  
-  // Configurar formulário de contato
-  const contactForm = document.querySelector('form[action="contact-sent.html"]');
-  if (contactForm) {
-    contactForm.action = 'javascript:void(0)';
-    contactForm.addEventListener('submit', handleContactFormSubmit);
-  }
-  
-  // Carrega os imóveis quando a página estiver pronta
-  loadProperties();
-}); 
+    // Carregar imóveis em destaque na página inicial
+    if (window.location.pathname.endsWith('index.html') || window.location.pathname === '/') {
+        loadFeaturedProperties();
+    } else if (
+        window.location.pathname.includes('venda.html') ||
+        window.location.pathname.includes('aluguel.html') ||
+        window.location.pathname.includes('lancamentos.html')
+    ) {
+        loadPropertiesByType();
+    }
+
+    // Carregar detalhes do imóvel na página de detalhes
+    loadPropertyDetails();
+
+    // Carregar estatísticas de imóveis
+    loadPropertyStats();
+
+    // Configurar formulário de contato
+    const contactForm = document.querySelector('form[action="contact-sent.html"]');
+    if (contactForm) {
+        contactForm.action = 'javascript:void(0)';
+        contactForm.addEventListener('submit', handleContactFormSubmit);
+    }
+
+    // Carrega os imóveis quando a página estiver pronta
+    loadProperties();
+});
