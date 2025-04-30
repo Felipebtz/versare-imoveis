@@ -16,7 +16,7 @@ const API_PROPERTIES = `${API_BASE_URL}/properties`;
 export function initializeLocalidadesFrontend(filterContainerId = null) {
     // Carregar cidades para o slider da página inicial
     loadCitiesForSlider();
-    
+
     // Inicializar o formulário de filtro, se existir
     initializeFilterForm(filterContainerId);
 }
@@ -27,51 +27,51 @@ export function initializeLocalidadesFrontend(filterContainerId = null) {
 async function loadCitiesForSlider() {
     try {
         const citySliderWrapper = document.querySelector('.swiper-wrapper');
-        
+
         // Se não encontrar o elemento, não continua
         if (!citySliderWrapper) return;
-        
+
         // Mostra um indicador de carregamento
         citySliderWrapper.innerHTML = '<div class="swiper-slide !w-fit" style="width: 100%; text-align: center;"><p>Carregando cidades...</p></div>';
-        
+
         // Carrega as cidades da API
         console.log('Carregando cidades da API:', API_CITIES);
         const response = await fetch(API_CITIES);
-        
+
         // Verifica se a resposta é válida
         if (!response.ok) {
             throw new Error(`Erro ao carregar cidades: ${response.status}`);
         }
-        
+
         const cities = await response.json();
-        
+
         // Verifica se a resposta é um array
         if (!Array.isArray(cities)) {
             throw new Error('A resposta não é um array de cidades');
         }
-        
+
         // Se não tiver cidades, exibe uma mensagem
         if (cities.length === 0) {
             citySliderWrapper.innerHTML = '<div class="swiper-slide !w-fit" style="width: 100%; text-align: center;"><p>Nenhuma cidade encontrada</p></div>';
             return;
         }
-        
+
         // Limpa o conteúdo atual do slider
         citySliderWrapper.innerHTML = '';
-        
+
         // Renderiza cada cidade no slider
         cities.forEach(city => {
             const slide = createCitySlide(city);
             citySliderWrapper.appendChild(slide);
         });
-        
+
         // Reinicializa o swiper para reconhecer os novos slides
         if (window.swiper) {
             window.swiper.update();
         }
     } catch (error) {
         console.error('Erro ao carregar cidades para o slider:', error);
-        
+
         // Exibe uma mensagem de erro no slider
         const citySliderWrapper = document.querySelector('.swiper-wrapper');
         if (citySliderWrapper) {
@@ -92,16 +92,16 @@ async function loadCitiesForSlider() {
 function createCitySlide(city) {
     const slide = document.createElement('div');
     slide.className = 'swiper-slide !w-fit first-of-type:pl-[calc((100%-1130px-60px)/2)] last-of-type:pr-[calc((100%-1130px-60px)/2)]';
-    
+
     // Formata a URL para a página de busca com o filtro de cidade
     const citySearchUrl = `venda.html?city_id=${city.id}`;
-    
+
     // Define o contador de imóveis (poderia ser obtido da API em uma implementação real)
     const propertyCount = city.property_count || 0;
-    
+
     // Define a imagem padrão caso a cidade não tenha imagem
     const imageUrl = city.image_url || 'assets/images/thumbnails/thumbnails-default.png';
-    
+
     slide.innerHTML = `
         <a href="${citySearchUrl}" class="card">
             <div class="relative flex shrink-0 w-[230px] h-[300px] rounded-[20px] overflow-hidden">
@@ -113,7 +113,7 @@ function createCitySlide(city) {
             </div>
         </a>
     `;
-    
+
     return slide;
 }
 
@@ -124,30 +124,30 @@ function createCitySlide(city) {
 function initializeFilterForm(containerId = null) {
     // Se for fornecido um ID de contêiner, procura por esse elemento
     const filterContainer = containerId ? document.getElementById(containerId) : null;
-    
+
     // Se encontrou o contêiner especificado
     if (filterContainer) {
         // Cria o formulário de filtro
         const filterForm = createFilterForm();
-        
+
         // Limpa o contêiner e insere o formulário
         filterContainer.innerHTML = '';
         filterContainer.appendChild(filterForm);
-        
+
         // Adiciona o evento de submit ao formulário
         filterForm.addEventListener('submit', handleFilterSubmit);
         return;
     }
-    
+
     // Comportamento antigo - se não tiver ID de contêiner ou não encontrar o elemento
     const freshSpaceSection = document.getElementById('Fresh-Space');
-    
+
     // Se não encontrar a seção, não continua
     if (!freshSpaceSection) return;
-    
+
     // Cria o formulário de filtro
     const filterForm = createFilterForm();
-    
+
     // Insere o formulário no início da seção, logo após o título
     const sectionTitle = freshSpaceSection.querySelector('h2');
     if (sectionTitle) {
@@ -155,7 +155,7 @@ function initializeFilterForm(containerId = null) {
     } else {
         freshSpaceSection.prepend(filterForm);
     }
-    
+
     // Adiciona o evento de submit ao formulário
     filterForm.addEventListener('submit', handleFilterSubmit);
 }
@@ -166,7 +166,7 @@ function initializeFilterForm(containerId = null) {
 function createFilterForm() {
     const formContainer = document.createElement('div');
     formContainer.className = 'w-full';
-    
+
     formContainer.innerHTML = `
         <form id="filter-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div class="flex flex-col">
@@ -210,10 +210,10 @@ function createFilterForm() {
             </div>
         </form>
     `;
-    
+
     // Após criar o formulário, carregar as cidades para o select
     loadCitiesForFilter(formContainer);
-    
+
     return formContainer;
 }
 
@@ -224,15 +224,15 @@ async function loadCitiesForFilter(formContainer) {
     try {
         const citySelect = formContainer.querySelector('#filter-city');
         if (!citySelect) return;
-        
+
         // Obter a lista de cidades da API
         const response = await fetch(API_CITIES);
         if (!response.ok) {
             throw new Error(`Erro ao carregar cidades: ${response.status}`);
         }
-        
+
         const cities = await response.json();
-        
+
         // Adicionar as opções de cidades ao select
         cities.forEach(city => {
             const option = document.createElement('option');
@@ -250,21 +250,25 @@ async function loadCitiesForFilter(formContainer) {
  */
 function handleFilterSubmit(event) {
     event.preventDefault();
-    
+
     // Obtém os valores dos campos
     const type = document.getElementById('filter-type').value;
     const city = document.getElementById('filter-city').value;
     const purpose = document.getElementById('filter-purpose').value;
     const code = document.getElementById('filter-code').value;
-    
+
     // Adiciona os parâmetros de busca na URL
     const params = new URLSearchParams();
-    
+
     if (type) params.append('type', type);
     if (city) params.append('city_id', city);
     if (code) params.append('code', code);
     if (purpose) params.append('purpose', purpose);
-    
+
     // Redireciona sempre para imoveis.html com os filtros aplicados
     window.location.href = `imoveis.html${params.toString() ? '?' + params.toString() : ''}`;
-} 
+}
+// No final de localidades-frontend.js
+document.addEventListener('DOMContentLoaded', function() {
+    initializeLocalidadesFrontend('filter-container');
+});

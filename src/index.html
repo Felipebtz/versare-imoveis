@@ -309,12 +309,7 @@
         }
     </script>
     <!-- Módulo de localidades -->
-    <script src="assets/js/modules/localidades-frontend.js" type="module"></script>
-    <script type="module">
-        import { initializeLocalidadesFrontend } from './assets/js/modules/localidades-frontend.js'; document.addEventListener('DOMContentLoaded', function () { // Inicializa o swiper para o carrossel de cidades window.swiper = new Swiper('.swiper', { slidesPerView:
-        'auto', spaceBetween: 30, loop: false, navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev', }, }); // Inicializa o módulo de localidades e passa o ID do novo contêiner de filtro initializeLocalidadesFrontend('filter-container');
-        });
-    </script>
+    <script src="./assets/js/modules/localidades-frontend.js" type="module"></script>
     <!-- Botão Flutuante WhatsApp -->
     <div class="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-2">
         <!-- Balão de mensagem -->
