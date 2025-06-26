@@ -37,7 +37,39 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB por arquivo
+    files: 30, // máximo de 30 arquivos
+    fieldSize: 30 * 1024 * 1024 // 30MB no total (para campos não arquivos, mas ajuda a limitar)
+  },
+  fileFilter: (req, file, cb) => {
+    if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.mimetype)) {
+      return cb(new Error('Formato de arquivo inválido. Apenas PNG e JPG são permitidos.'));
+    }
+    cb(null, true);
+  }
+});
+
+// Middleware para tratar erros do Multer
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: 'Uma ou mais imagens excedem o tamanho máximo de 5MB.' });
+    }
+    if (err.code === 'LIMIT_FILE_COUNT') {
+      return res.status(400).json({ error: 'Você pode enviar no máximo 30 imagens por imóvel.' });
+    }
+    if (err.code === 'LIMIT_FIELD_SIZE') {
+      return res.status(400).json({ error: 'O tamanho total das imagens não pode ultrapassar 30MB.' });
+    }
+    return res.status(400).json({ error: 'Erro no upload de imagens: ' + err.message });
+  } else if (err) {
+    return res.status(400).json({ error: err.message });
+  }
+  next();
+});
 
 // Conectar ao banco de dados SQLite
 const db = new sqlite3.Database('./database.db', (err) => {

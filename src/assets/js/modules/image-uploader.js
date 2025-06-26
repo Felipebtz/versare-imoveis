@@ -30,33 +30,48 @@ function initImageUploader(inputId = 'property-images', previewId = 'image-previ
    * @param {Event} event - Evento de mudança do input
    */
   function handleImageSelection(event) {
-    console.log(`${event.target.files.length} imagens selecionadas`);
-    
-    if (event.target.files.length > 30) {
-      showAlert('Você pode enviar no máximo 30 imagens por imóvel.', 'error');
+    const files = Array.from(event.target.files);
+    const maxFiles = 30;
+    const maxFileSize = 5 * 1024 * 1024; // 5MB
+    const maxTotalSize = 30 * 1024 * 1024; // 30MB
+
+    if (files.length > maxFiles) {
+      showAlert(`Você pode enviar no máximo ${maxFiles} imagens por imóvel.`, 'error');
       imageInput.value = '';
       imagePreview.innerHTML = '';
       return;
     }
-    
-    if (event.target.files.length > 0) {
+
+    let totalSize = 0;
+    let hasError = false;
+    imagePreview.innerHTML = '';
+
+    files.forEach(file => {
+      totalSize += file.size;
+      if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
+        showAlert('Formato de arquivo inválido. Apenas PNG e JPG são permitidos.', 'error');
+        hasError = true;
+        return;
+      }
+      if (file.size > maxFileSize) {
+        showAlert(`Arquivo muito grande: ${file.name}. O tamanho máximo é 5MB por imagem.`, 'error');
+        hasError = true;
+        return;
+      }
+      createImagePreview(file, imagePreview);
+    });
+
+    if (totalSize > maxTotalSize) {
+      showAlert(`O tamanho total das imagens não pode ultrapassar 30MB.`, 'error');
+      imageInput.value = '';
       imagePreview.innerHTML = '';
-      
-      Array.from(event.target.files).forEach(file => {
-        // Validar tipo de arquivo
-        if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
-          showAlert('Formato de arquivo inválido. Apenas PNG e JPG são permitidos.', 'error');
-          return;
-        }
-        
-        // Validar tamanho (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          showAlert('Arquivo muito grande. O tamanho máximo é 5MB.', 'error');
-          return;
-        }
-        
-        createImagePreview(file, imagePreview);
-      });
+      return;
+    }
+
+    if (hasError) {
+      imageInput.value = '';
+      imagePreview.innerHTML = '';
+      return;
     }
   }
 }
