@@ -319,12 +319,18 @@ function handlePropertyForm(event) {
   const propertyId = form.getAttribute('data-property-id');
   
   // Obter dados do formulário
+  let priceValue = form.querySelector('#price')?.value;
+  if (priceValue === undefined || priceValue === null || priceValue === '' || isNaN(Number(priceValue))) {
+    showAlert('O campo preço é obrigatório e deve ser um número.', 'error');
+    return;
+  }
+  priceValue = String(Number(priceValue));
   const formData = {
     code: form.querySelector('#code')?.value,
     title: form.querySelector('#title')?.value,
     type: form.querySelector('#type')?.value,
     property_type: form.querySelector('#property_type')?.value,
-    price: form.querySelector('#price')?.value,
+    price: priceValue,
     status: form.querySelector('#status')?.value,
     neighborhood: form.querySelector('#neighborhood')?.value,
     city: form.querySelector('#city')?.value,
@@ -384,7 +390,7 @@ function handlePropertyForm(event) {
     })
     .then(data => {
       // Após salvar com sucesso, enviar as imagens
-      const propertyId = isEditing ? propertyId : data.id;
+      const savedPropertyId = isEditing ? propertyId : data.id;
       
       // Verificar se há imagens para enviar
       const imageInput = document.getElementById('property-images');
@@ -403,8 +409,8 @@ function handlePropertyForm(event) {
         showAlert('Enviando imagens e vídeos...', 'info');
         
         // Chamar função para upload de imagens e depois de vídeos
-        return uploadPropertyImages(propertyId)
-          .then(() => saveVideos(propertyId))
+        return uploadPropertyImages(savedPropertyId)
+          .then(() => saveVideos(savedPropertyId))
           .then(() => {
             showAlert(isEditing ? 'Imóvel, imagens e vídeos atualizados com sucesso' : 'Imóvel, imagens e vídeos adicionados com sucesso', 'success');
             // Redirecionar após sucesso
@@ -427,7 +433,7 @@ function handlePropertyForm(event) {
         showAlert('Enviando imagens...', 'info');
         
         // Chamar função para upload de imagens
-        return uploadPropertyImages(propertyId)
+        return uploadPropertyImages(savedPropertyId)
           .then(() => {
             showAlert(isEditing ? 'Imóvel e imagens atualizados com sucesso' : 'Imóvel e imagens adicionados com sucesso', 'success');
             // Redirecionar após sucesso
@@ -450,7 +456,7 @@ function handlePropertyForm(event) {
         showAlert('Enviando vídeos...', 'info');
         
         // Chamar função para upload de vídeos
-        return saveVideos(propertyId)
+        return saveVideos(savedPropertyId)
           .then(() => {
             showAlert(isEditing ? 'Imóvel e vídeos atualizados com sucesso' : 'Imóvel e vídeos adicionados com sucesso', 'success');
             // Redirecionar após sucesso

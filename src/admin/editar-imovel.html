@@ -148,7 +148,7 @@
                                 </div>
                                 <div class="flex flex-col gap-[10px]">
                                     <label for="price" class="font-semibold">Preço *</label>
-                                    <input type="text" id="price" name="price" placeholder="Ex: 950000" class="rounded-[10px] border border-[#E0DEF7] p-3 w-full" required>
+                                    <input type="number" id="price" name="price" placeholder="Ex: 950000" class="rounded-[10px] border border-[#E0DEF7] p-3 w-full" required min="0" step="1">
                                     <p class="text-xs text-gray-500">Para lançamentos, use "A partir de" no título</p>
                                 </div>
                             </div>
@@ -434,5 +434,7 @@
             }
         });
     </script>
+    <script type="module" src="../assets/js/modules/properties.js"></script>
+    <script type="module" src="../assets/js/modules/image-uploader.js"></script>
 </body>
 </html> 

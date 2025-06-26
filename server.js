@@ -755,7 +755,7 @@ app.delete('/api/admin/properties/:id', (req, res) => {
 });
 
 // Upload de imagens para imóveis
-app.post('/api/admin/properties/:id/images', upload.array('images', 10), (req, res) => {
+app.post('/api/admin/properties/:id/images', upload.array('images', 30), (req, res) => {
     const propertyId = req.params.id;
     const files = req.files;
 
@@ -793,6 +793,15 @@ app.post('/api/admin/properties/:id/images', upload.array('images', 10), (req, r
             message: 'Imagens enviadas com sucesso!',
             images: imageRecords
         });
+    });
+});
+
+// Novo endpoint: Listar imagens de um imóvel
+app.get('/api/admin/properties/:id/images', (req, res) => {
+    const propertyId = req.params.id;
+    db.all('SELECT id, image_url as url, is_main FROM property_images WHERE property_id = ?', [propertyId], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ images: rows });
     });
 });
 
@@ -1744,6 +1753,19 @@ app.get('/api/cities', (req, res) => {
             return res.status(500).json({ error: err.message });
         }
         res.json(rows);
+    });
+});
+
+// Novo endpoint: Remover imagem de um imóvel
+app.delete('/api/admin/properties/:propertyId/images/:imageId', (req, res) => {
+    const { propertyId, imageId } = req.params;
+    db.get('SELECT * FROM property_images WHERE id = ? AND property_id = ?', [imageId, propertyId], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!row) return res.status(404).json({ error: 'Imagem não encontrada' });
+        db.run('DELETE FROM property_images WHERE id = ?', [imageId], function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ success: true, message: 'Imagem excluída com sucesso!' });
+        });
     });
 });
 

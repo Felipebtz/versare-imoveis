@@ -32,6 +32,13 @@ function initImageUploader(inputId = 'property-images', previewId = 'image-previ
   function handleImageSelection(event) {
     console.log(`${event.target.files.length} imagens selecionadas`);
     
+    if (event.target.files.length > 30) {
+      showAlert('Você pode enviar no máximo 30 imagens por imóvel.', 'error');
+      imageInput.value = '';
+      imagePreview.innerHTML = '';
+      return;
+    }
+    
     if (event.target.files.length > 0) {
       imagePreview.innerHTML = '';
       
