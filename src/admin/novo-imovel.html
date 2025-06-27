@@ -283,6 +283,9 @@
                             <div id="image-preview" class="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                                 <!-- Imagens carregadas serão exibidas aqui -->
                             </div>
+                            <button type="button" class="mt-4 inline-flex items-center px-4 py-2 border border-green-700 shadow-sm text-sm font-medium rounded-md text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-700" id="confirm-upload-btn" disabled>
+                                Adicionar as imagens
+                            </button>
                         </div>
                         
                         <!-- Seção de Vídeos do YouTube -->
@@ -324,7 +327,7 @@
                         
                         <div class="flex justify-end space-x-4">
                             <a href="imoveis.html" class="btn btn-secondary btn-md">Cancelar</a>
-                            <button type="submit" class="btn btn-primary btn-md whitespace-nowrap bg-[#142a3d]">Salvar Imóvel</button>
+                            <button type="submit" class="btn btn-primary btn-md whitespace-nowrap bg-[#142a3d]" id="save-property-btn" disabled>Salvar Imóvel</button>
                         </div>
                     </form>
                 </div>
@@ -335,7 +338,7 @@
     <script type="module">
         import { checkAuth } from '../assets/js/modules/auth.js';
         import { handlePropertyForm } from '../assets/js/modules/properties.js';
-        import { initImageUploader } from '../assets/js/modules/image-uploader.js';
+        import { initImageUploaderWithConfirmation } from '../assets/js/modules/image-uploader.js';
         import { initVideoManager } from '../assets/js/modules/video-manager.js';
 
         // Garantir que a variável global pendingVideos esteja definida
@@ -348,8 +351,8 @@
             // Verificar autenticação
             checkAuth();
             
-            // Inicializar o uploader de imagens
-            initImageUploader('property-images', 'image-preview');
+            // Inicializar o uploader de imagens com confirmação
+            initImageUploaderWithConfirmation('property-images', 'image-preview', 'confirm-upload-btn', 'save-property-btn');
             
             // Inicializar o gerenciador de vídeos
             initVideoManager('video-preview', 'video-url', 'video-title', 'add-video-btn');

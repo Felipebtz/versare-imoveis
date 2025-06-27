@@ -6,6 +6,67 @@
 import { API_BASE_URL } from '../config/auth.js';
 import { showAlert } from './ui.js';
 
+// Variável global para armazenar as imagens confirmadas
+let confirmedImages = [];
+
+/**
+ * Inicializa o uploader de imagens com integração ao botão de confirmação
+ * @param {String} inputId - ID do input de arquivo
+ * @param {String} previewId - ID do container de pré-visualização
+ * @param {String} confirmBtnId - ID do botão de confirmação
+ * @param {String} saveBtnId - ID do botão de salvar imóvel
+ */
+function initImageUploaderWithConfirmation(inputId = 'property-images', previewId = 'image-preview', confirmBtnId = 'confirm-upload-btn', saveBtnId = 'save-property-btn') {
+  const imageInput = document.getElementById(inputId);
+  const imagePreview = document.getElementById(previewId);
+  const confirmBtn = document.getElementById(confirmBtnId);
+  const saveBtn = document.getElementById(saveBtnId);
+
+  if (!imageInput || !imagePreview || !confirmBtn || !saveBtn) {
+    console.error('Elementos do uploader não encontrados');
+    return;
+  }
+
+  // Desabilitar botões inicialmente
+  confirmBtn.disabled = true;
+  saveBtn.disabled = true;
+  confirmedImages = [];
+
+  imageInput.addEventListener('change', (event) => {
+    handleImageSelection(event);
+    // Habilita o botão de confirmar upload se houver arquivos
+    confirmBtn.disabled = !(imageInput.files && imageInput.files.length > 0);
+    saveBtn.disabled = true;
+    confirmedImages = [];
+  });
+
+  confirmBtn.addEventListener('click', () => {
+    console.log('[DEPURAÇÃO] Usuário clicou em "Adicionar as imagens". Iniciando upload das imagens...');
+    confirmBtn.disabled = true;
+    saveBtn.disabled = true;
+    uploadTempImages(inputId)
+      .then(result => {
+        if (result.success && result.images.length > 0) {
+          confirmedImages = result.images;
+          showAlert('Imagens adicionadas com sucesso! Agora você pode salvar o imóvel.', 'success');
+          saveBtn.disabled = false;
+          console.log('[DEPURAÇÃO] Upload de imagens concluído com sucesso. Imagens enviadas:', result.images);
+        } else {
+          showAlert('Nenhuma imagem foi enviada.', 'error');
+          confirmedImages = [];
+          saveBtn.disabled = true;
+          console.log('[DEPURAÇÃO] Nenhuma imagem foi enviada no upload.');
+        }
+      })
+      .catch((err) => {
+        showAlert('Erro ao enviar imagens.', 'error');
+        confirmedImages = [];
+        saveBtn.disabled = true;
+        console.log('[DEPURAÇÃO] Erro ao enviar imagens:', err);
+      });
+  });
+}
+
 /**
  * Inicializa o uploader de imagens
  * @param {String} inputId - ID do input de arquivo
@@ -13,66 +74,65 @@ import { showAlert } from './ui.js';
  */
 function initImageUploader(inputId = 'property-images', previewId = 'image-preview') {
   console.log('Inicializando uploader de imagens');
-  
   const imageInput = document.getElementById(inputId);
   const imagePreview = document.getElementById(previewId);
-  
   if (!imageInput || !imagePreview) {
     console.error(`Elementos não encontrados: input=${!!imageInput}, preview=${!!imagePreview}`);
     return;
   }
-  
   // Inicializar listeners
   imageInput.addEventListener('change', handleImageSelection);
-  
-  /**
-   * Manipula a seleção de imagens
-   * @param {Event} event - Evento de mudança do input
-   */
-  function handleImageSelection(event) {
-    const files = Array.from(event.target.files);
-    const maxFiles = 30;
-    const maxFileSize = 5 * 1024 * 1024; // 5MB
-    const maxTotalSize = 30 * 1024 * 1024; // 30MB
+}
 
-    if (files.length > maxFiles) {
-      showAlert(`Você pode enviar no máximo ${maxFiles} imagens por imóvel.`, 'error');
-      imageInput.value = '';
-      imagePreview.innerHTML = '';
-      return;
-    }
+/**
+ * Manipula a seleção de imagens
+ * @param {Event} event - Evento de mudança do input
+ */
+function handleImageSelection(event) {
+  const imageInput = event.target;
+  const imagePreview = document.getElementById('image-preview');
+  const files = Array.from(imageInput.files);
+  const maxFiles = 30;
+  const maxFileSize = 5 * 1024 * 1024; // 5MB
+  const maxTotalSize = 30 * 1024 * 1024; // 30MB
 
-    let totalSize = 0;
-    let hasError = false;
+  if (files.length > maxFiles) {
+    showAlert(`Você pode enviar no máximo ${maxFiles} imagens por imóvel.`, 'error');
+    imageInput.value = '';
     imagePreview.innerHTML = '';
+    return;
+  }
 
-    files.forEach(file => {
-      totalSize += file.size;
-      if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
-        showAlert('Formato de arquivo inválido. Apenas PNG e JPG são permitidos.', 'error');
-        hasError = true;
-        return;
-      }
-      if (file.size > maxFileSize) {
-        showAlert(`Arquivo muito grande: ${file.name}. O tamanho máximo é 5MB por imagem.`, 'error');
-        hasError = true;
-        return;
-      }
-      createImagePreview(file, imagePreview);
-    });
+  let totalSize = 0;
+  let hasError = false;
+  imagePreview.innerHTML = '';
 
-    if (totalSize > maxTotalSize) {
-      showAlert(`O tamanho total das imagens não pode ultrapassar 30MB.`, 'error');
-      imageInput.value = '';
-      imagePreview.innerHTML = '';
+  files.forEach(file => {
+    totalSize += file.size;
+    if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
+      showAlert('Formato de arquivo inválido. Apenas PNG e JPG são permitidos.', 'error');
+      hasError = true;
       return;
     }
-
-    if (hasError) {
-      imageInput.value = '';
-      imagePreview.innerHTML = '';
+    if (file.size > maxFileSize) {
+      showAlert(`Arquivo muito grande: ${file.name}. O tamanho máximo é 5MB por imagem.`, 'error');
+      hasError = true;
       return;
     }
+    createImagePreview(file, imagePreview);
+  });
+
+  if (totalSize > maxTotalSize) {
+    showAlert(`O tamanho total das imagens não pode ultrapassar 30MB.`, 'error');
+    imageInput.value = '';
+    imagePreview.innerHTML = '';
+    return;
+  }
+
+  if (hasError) {
+    imageInput.value = '';
+    imagePreview.innerHTML = '';
+    return;
   }
 }
 
@@ -253,10 +313,53 @@ function deletePropertyImage(propertyId, imageId, element) {
     });
 }
 
+/**
+ * Faz upload das imagens temporárias antes do cadastro do imóvel
+ * @param {String} inputId - ID do input de arquivo
+ * @returns {Promise} Promise com as URLs das imagens
+ */
+export function uploadTempImages(inputId = 'property-images') {
+  return new Promise((resolve, reject) => {
+    const imageInput = document.getElementById(inputId);
+    if (!imageInput || imageInput.files.length === 0) {
+      resolve({ success: true, images: [] });
+      return;
+    }
+    const formData = new FormData();
+    Array.from(imageInput.files).forEach(file => {
+      formData.append('images', file);
+    });
+    fetch(`/api/admin/properties/images/temp`, {
+      method: 'POST',
+      body: formData
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Erro ao fazer upload das imagens');
+        }
+        return response.json();
+      })
+      .then(data => {
+        resolve(data);
+      })
+      .catch(error => {
+        reject(error);
+      });
+  });
+}
+
+/**
+ * Retorna as imagens confirmadas para cadastro
+ */
+export function getConfirmedImages() {
+  return confirmedImages;
+}
+
 // Exportar funções
 export {
   initImageUploader,
   uploadPropertyImages,
   loadExistingImages,
-  deletePropertyImage
+  deletePropertyImage,
+  initImageUploaderWithConfirmation
 }; 

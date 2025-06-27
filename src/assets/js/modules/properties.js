@@ -4,7 +4,7 @@
 
 import { API_BASE_URL } from '../config/auth.js';
 import { showAlert, formatPrice, formatPropertyType, updatePaginationInfo } from './ui.js';
-import { uploadPropertyImages } from './image-uploader.js';
+import { uploadPropertyImages, uploadTempImages, getConfirmedImages, initImageUploaderWithConfirmation } from './image-uploader.js';
 import { initVideoManager, saveVideos, loadExistingVideos } from './video-manager.js';
 
 // Função de debounce para evitar múltiplas requisições
@@ -310,18 +310,36 @@ function deleteProperty(propertyId) {
     });
 }
 
+/**
+ * Verifica se já existe um imóvel com o código informado
+ * @param {string} code
+ * @returns {Promise<boolean>}
+ */
+async function checkCodeExists(code) {
+  if (!code) return false;
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/properties`);
+    if (!response.ok) return false;
+    const properties = await response.json();
+    return properties.some(p => String(p.code).toLowerCase() === String(code).toLowerCase());
+  } catch (e) {
+    return false;
+  }
+}
+
 // Enviar formulário de imóvel (novo ou edição)
-function handlePropertyForm(event) {
+async function handlePropertyForm(event) {
   event.preventDefault();
-  
   const form = event.target;
   const isEditing = form.getAttribute('data-editing') === 'true';
   const propertyId = form.getAttribute('data-property-id');
-  
+  console.log('[DEPURAÇÃO] Iniciando envio do formulário de imóvel. Edição:', isEditing);
+
   // Obter dados do formulário
   let priceValue = form.querySelector('#price')?.value;
   if (priceValue === undefined || priceValue === null || priceValue === '' || isNaN(Number(priceValue))) {
     showAlert('O campo preço é obrigatório e deve ser um número.', 'error');
+    console.log('[DEPURAÇÃO] Falha: campo preço inválido');
     return;
   }
   priceValue = String(Number(priceValue));
@@ -345,27 +363,82 @@ function handlePropertyForm(event) {
     description: form.querySelector('#description')?.value,
     featured: form.querySelector('#featured')?.checked ? 1 : 0
   };
-  
   // Obter comodidades selecionadas
   const amenities = [];
   form.querySelectorAll('input[type="checkbox"][name^="amenity_"]:checked').forEach(checkbox => {
     amenities.push(checkbox.value);
   });
-  
   formData.amenities = amenities;
-  
+
   // Validar campos obrigatórios
   if (!formData.title || !formData.type || !formData.property_type || !formData.price || 
       !formData.status || !formData.neighborhood || !formData.city) {
     showAlert('Preencha todos os campos obrigatórios', 'error');
+    console.log('[DEPURAÇÃO] Falha: campos obrigatórios não preenchidos');
     return;
   }
-  
+
+  // NOVO: Verificar código duplicado antes de enviar
+  if (!isEditing) {
+    const codeExists = await checkCodeExists(formData.code);
+    if (codeExists) {
+      showAlert('Já existe um imóvel com este código. Escolha outro código.', 'error');
+      console.log('[DEPURAÇÃO] Falha: já existe imóvel com este código (checado no frontend)');
+      return;
+    }
+  }
+
+  // NOVO: Só permitir cadastro se houver imagens confirmadas
+  const confirmedImages = getConfirmedImages();
+  if (!isEditing && (!confirmedImages || confirmedImages.length === 0)) {
+    showAlert('Adicione e confirme as imagens antes de salvar o imóvel.', 'error');
+    console.log('[DEPURAÇÃO] Falha: nenhuma imagem confirmada para o imóvel');
+    return;
+  }
+  if (!isEditing) {
+    formData.images = confirmedImages;
+    console.log(`[DEPURAÇÃO] Imagens confirmadas para cadastro:`, confirmedImages);
+  }
+
   // Desabilitar o botão de envio
   const submitButton = form.querySelector('button[type="submit"]');
   if (submitButton) {
     submitButton.disabled = true;
     submitButton.textContent = isEditing ? 'Atualizando...' : 'Salvando...';
+  }
+
+  // Cadastro normal (agora já com imagens confirmadas)
+  if (!isEditing) {
+    console.log('[DEPURAÇÃO] Payload enviado para o backend:', formData);
+    fetch(`${API_BASE_URL}/admin/properties`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(formData)
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Erro ao adicionar imóvel');
+        }
+        return response.json();
+      })
+      .then(data => {
+        showAlert('Imóvel e imagens adicionados com sucesso', 'success');
+        console.log('[DEPURAÇÃO] Imóvel cadastrado com sucesso:', data);
+        setTimeout(() => {
+          window.location.href = 'imoveis.html';
+        }, 1500);
+      })
+      .catch(error => {
+        showAlert('Erro ao cadastrar imóvel: ' + error.message, 'error');
+        console.log('[DEPURAÇÃO] Erro ao cadastrar imóvel:', error);
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = 'Adicionar Imóvel';
+        }
+      });
+    return;
   }
   
   // Definir método e URL baseado se é edição ou criação

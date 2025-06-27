@@ -91,7 +91,7 @@ async function loadCitiesForSlider() {
  */
 function createCitySlide(city) {
     const slide = document.createElement('div');
-    slide.className = 'swiper-slide !w-fit first-of-type:pl-[calc((100%-1130px-60px)/2)] last-of-type:pr-[calc((100%-1130px-60px)/2)]';
+    slide.className = 'swiper-slide !w-fit first-of-type:pl-[calc((100%-1130px-60px)/2)] last-of-type:pr-[calc((100%-1130px-60px)/2)] mx-3';
 
     // Formata a URL para a página de busca com o filtro de cidade
     const citySearchUrl = `venda.html?city_id=${city.id}`;

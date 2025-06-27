@@ -615,6 +615,7 @@ app.get('/api/admin/properties', (req, res) => {
 
 // Rota para adicionar um novo imóvel
 app.post('/api/admin/properties', (req, res) => {
+    console.log('[DEPURAÇÃO] Iniciando cadastro de imóvel:', req.body.code);
     const {
         code,
         title,
@@ -634,21 +635,28 @@ app.post('/api/admin/properties', (req, res) => {
         furnished,
         description,
         featured,
-        amenities
+        amenities,
+        images // novo campo
     } = req.body;
 
     // Validar campos obrigatórios
     if (!code || !title || !type || !property_type || !price || !status || !neighborhood || !city) {
+        console.log('[DEPURAÇÃO] Falha: campos obrigatórios não preenchidos');
         return res.status(400).json({ error: 'Campos obrigatórios não preenchidos' });
+    }
+    if (!images || !Array.isArray(images) || images.length === 0) {
+        console.log('[DEPURAÇÃO] Falha: nenhuma imagem enviada para o imóvel');
+        return res.status(400).json({ error: 'É obrigatório adicionar pelo menos uma imagem ao imóvel.' });
     }
 
     // Verificar se já existe um imóvel com o mesmo código
     db.get('SELECT id FROM properties WHERE code = ?', [code], (err, row) => {
         if (err) {
+            console.log('[DEPURAÇÃO] Erro ao verificar código duplicado:', err.message);
             return res.status(500).json({ error: err.message });
         }
-
         if (row) {
+            console.log('[DEPURAÇÃO] Falha: já existe imóvel com este código');
             return res.status(400).json({ error: 'Já existe um imóvel com este código' });
         }
 
@@ -669,19 +677,27 @@ app.post('/api/admin/properties', (req, res) => {
             ],
             function(err) {
                 if (err) {
+                    console.log('[DEPURAÇÃO] Erro ao inserir imóvel:', err.message);
                     return res.status(500).json({ error: err.message });
                 }
 
                 const propertyId = this.lastID;
+                console.log(`[DEPURAÇÃO] Imóvel cadastrado com ID ${propertyId}`);
+
+                // Inserir imagens
+                const insertImageStmt = db.prepare('INSERT INTO property_images (property_id, image_url, is_main) VALUES (?, ?, ?)');
+                images.forEach((img, idx) => {
+                    insertImageStmt.run(propertyId, img.url, idx === 0 ? 1 : 0);
+                });
+                insertImageStmt.finalize();
+                console.log(`[DEPURAÇÃO] ${images.length} imagens associadas ao imóvel ${propertyId}`);
 
                 // Se houver comodidades, inseri-las
                 if (amenities && amenities.length > 0) {
                     const insertAmenityStmt = db.prepare('INSERT INTO property_amenities (property_id, name) VALUES (?, ?)');
-
                     amenities.forEach(name => {
                         insertAmenityStmt.run(propertyId, name);
                     });
-
                     insertAmenityStmt.finalize();
                 }
 
@@ -796,6 +812,20 @@ app.delete('/api/admin/properties/:id', (req, res) => {
             message: 'Imóvel removido com sucesso!'
         });
     });
+});
+
+// Upload de imagens temporárias (antes do cadastro do imóvel)
+app.post('/api/admin/properties/images/temp', upload.array('images', 30), (req, res) => {
+    const files = req.files;
+    if (!files || files.length === 0) {
+        return res.status(400).json({ error: 'Nenhuma imagem enviada' });
+    }
+    const imageRecords = files.map((file, index) => ({
+        url: '/assets/images/uploads/' + file.filename,
+        filename: file.filename,
+        isMain: index === 0 ? 1 : 0
+    }));
+    res.json({ success: true, images: imageRecords });
 });
 
 // Upload de imagens para imóveis
