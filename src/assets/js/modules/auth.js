@@ -106,8 +106,8 @@ export function logout() {
 
 // Usuário e senha fixos para autenticação
 const ADMIN_CREDENTIALS = {
-    username: 'admin',
-    password: 'admin123'
+    username: 'versare-imoveis',
+    password: 'versa8765'
 };
 
 // Lidar com o login do usuário
