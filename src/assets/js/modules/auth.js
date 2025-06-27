@@ -10,6 +10,7 @@ export const API_BASE_URL = '/api';
 
 // Simular usuário para desenvolvimento
 export function setupMockAuth() {
+    console.log('[auth] setupMockAuth chamada');
     // Se não há usuário no localStorage, criar um mock para desenvolvimento
     if (!localStorage.getItem('admin_user')) {
         console.warn('Criando usuário mock para desenvolvimento');
@@ -26,8 +27,9 @@ export function setupMockAuth() {
 
 // Função para verificar autenticação
 export function checkAuth() {
-    // Para desenvolvimento, criar um usuário mock se não existir
-    setupMockAuth();
+    console.log('[auth] checkAuth chamada');
+    // Remover a criação automática de usuário mock
+    // setupMockAuth(); // REMOVIDO
 
     // Verificar se há um usuário no localStorage
     const isAuthenticated = !!localStorage.getItem('admin_user');
@@ -41,6 +43,7 @@ export function checkAuth() {
 
 // Verificar se o usuário está logado (para versão assíncrona)
 export async function isLoggedIn() {
+    console.log('[auth] isLoggedIn chamada');
     try {
         // Para desenvolvimento, criar um usuário mock se não existir
         setupMockAuth();
@@ -76,6 +79,7 @@ export async function isLoggedIn() {
 
 // Obter usuário logado do localStorage
 export function getLoggedUser() {
+    console.log('[auth] getLoggedUser chamada');
     const userData = localStorage.getItem('admin_user');
     if (!userData) return null;
 
@@ -89,17 +93,26 @@ export function getLoggedUser() {
 
 // Salvar usuário no localStorage
 export function saveUser(user) {
+    console.log('[auth] saveUser chamada', user);
     localStorage.setItem('admin_user', JSON.stringify(user));
 }
 
 // Fazer logout
 export function logout() {
+    console.log('[auth] logout chamada');
     localStorage.removeItem('admin_user');
     window.location.href = 'login.html';
 }
 
+// Usuário e senha fixos para autenticação
+const ADMIN_CREDENTIALS = {
+    username: 'admin',
+    password: 'admin123'
+};
+
 // Lidar com o login do usuário
 export function handleLogin(event) {
+    console.log('[auth] handleLogin chamada');
     event.preventDefault();
 
     const form = event.target;
@@ -119,56 +132,29 @@ export function handleLogin(event) {
     }
 
     try {
-        // Para desenvolvimento, aceitar qualquer usuário e senha
-        console.warn('Usando login mockado para desenvolvimento');
-        const mockUser = {
-            id: 1,
-            username: username,
-            name: 'Administrador',
-            role: 'admin',
-            created_at: new Date().toISOString()
-        };
-
-        // Salvar usuário e redirecionar
-        saveUser(mockUser);
-        window.location.href = 'index.html';
-
-        /* Em produção, usar este código:
-        // Fazer requisição para a API
-        fetch(`${API_BASE_URL}/auth/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ username, password })
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Credenciais inválidas');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Salvar usuário e redirecionar
-                saveUser(data.user);
-                window.location.href = 'index.html';
-            })
-            .catch(error => {
-                console.error('Erro ao fazer login:', error);
-                showAlert('Nome de usuário ou senha incorretos', 'error');
-                
-                // Reabilitar o botão
-                if (loginButton) {
-                    loginButton.disabled = false;
-                    loginButton.textContent = 'Entrar';
-                }
-            });
-        */
+        // Verificar usuário e senha fixos
+        if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+            console.log('[auth] Login bem-sucedido');
+            const user = {
+                id: 1,
+                username: username,
+                name: 'Administrador',
+                role: 'admin',
+                created_at: new Date().toISOString()
+            };
+            saveUser(user);
+            window.location.href = 'index.html';
+        } else {
+            console.warn('[auth] Login falhou: usuário ou senha incorretos');
+            showAlert('Nome de usuário ou senha incorretos', 'error');
+            if (loginButton) {
+                loginButton.disabled = false;
+                loginButton.textContent = 'Entrar';
+            }
+        }
     } catch (error) {
         console.error('Erro ao fazer login:', error);
-        showAlert('Nome de usuário ou senha incorretos', 'error');
-
-        // Reabilitar o botão
+        showAlert('Erro ao fazer login', 'error');
         if (loginButton) {
             loginButton.disabled = false;
             loginButton.textContent = 'Entrar';

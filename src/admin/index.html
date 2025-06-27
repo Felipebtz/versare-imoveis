@@ -197,6 +197,11 @@
         });
     </script>
     <script type="module" src="js.js"></script>
+    <script type="module">
+        console.log('[index] Script de proteção carregado');
+        import { checkAuth } from '../assets/js/modules/auth.js';
+        checkAuth();
+    </script>
 </body>
 
 </html>

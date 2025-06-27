@@ -44,5 +44,14 @@
     </div>
     
     <script src="../assets/js/admin.js"></script>
+    <script type="module">
+      import { handleLogin } from '../assets/js/modules/auth.js';
+      document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        if (form) {
+          form.addEventListener('submit', handleLogin);
+        }
+      });
+    </script>
 </body>
 </html> 

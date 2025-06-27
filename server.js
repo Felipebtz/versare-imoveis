@@ -447,11 +447,23 @@ app.get('/api/properties', (req, res) => {
     // Organizar por mais recentes
     query += ' ORDER BY created_at DESC';
 
-    db.all(query, params, (err, rows) => {
+    db.all(query, params, async (err, rows) => {
         if (err) {
             return res.status(500).json({ error: err.message });
         }
-        res.json(rows);
+        // Buscar a imagem principal de cada imóvel
+        const propertiesWithImage = await Promise.all(rows.map(property => {
+            return new Promise((resolve) => {
+                db.get('SELECT image_url FROM property_images WHERE property_id = ? AND is_main = 1 LIMIT 1', [property.id], (err, imgRow) => {
+                    let main_image_url = null;
+                    if (imgRow && imgRow.image_url) {
+                        main_image_url = imgRow.image_url;
+                    }
+                    resolve({ ...property, main_image_url });
+                });
+            });
+        }));
+        res.json(propertiesWithImage);
     });
 });
 
@@ -1803,5 +1815,5 @@ app.delete('/api/admin/properties/:propertyId/images/:imageId', (req, res) => {
 
 // Iniciar o servidor
 app.listen(PORT, () => {
-    console.log(`Servidor rodando na porta https://localhost:${PORT}`);
+    console.log(`Servidor rodando na porta http://localhost:${PORT}`);
 });
