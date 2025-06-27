@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="../output.css" rel="stylesheet">
+    <title>Cadastro em Massa de Imóveis | Painel Administrativo</title>
+</head>
+<body class="bg-[#F7F7FD]">
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white border-r border-[#E0DEF7] shadow-md hidden md:block">
+            <div class="p-4 border-b border-[#E0DEF7]">
+                <a href="../index.html" target="_blank" class="block">
+                    <img src="../assets/images/logos/logo.svg" alt="First Office" class="w-[130px]">
+                </a>
+                <p class="mt-2 text-sm text-gray-500">Painel Administrativo</p>
+            </div>
+            <nav class="p-4">
+                <ul class="space-y-2">
+                    <li><a href="index.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg">Dashboard</a></li>
+                    <li><a href="imoveis.html" class="flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-lg">Imóveis</a></li>
+                    <li><a href="cadastro-massa-imoveis.html" class="flex items-center p-3 bg-[#142a3d] text-white rounded-lg">Cadastro em Massa</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <div class="flex-1 flex flex-col">
+            <header class="bg-white shadow-sm border-b border-[#E0DEF7] p-4 sticky top-0 z-30">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                    <h1 class="text-xl font-semibold text-gray-800">Cadastro em Massa de Imóveis</h1>
+                    <div class="flex gap-2 flex-wrap">
+                        <button id="add-row-btn" class="btn btn-primary btn-md bg-[#142a3d] text-white rounded-lg hover:bg-[#1a3a5d] transition">Adicionar Linha</button>
+                        <button id="json-modal-btn" class="btn btn-secondary btn-md border border-[#142a3d] text-[#142a3d] rounded-lg hover:bg-[#f0f4fa] transition">Preencher por JSON</button>
+                        <button type="submit" form="massForm" class="btn btn-primary btn-md bg-green-700 text-white rounded-lg hover:bg-green-800 transition">Enviar Todos</button>
+                    </div>
+                </div>
+            </header>
+            <main class="flex-1 p-6 bg-[#f7fafd] min-h-screen">
+                <div class="overflow-x-auto rounded-lg border border-[#E0DEF7] bg-white shadow-md">
+                    <form id="massForm">
+                        <table class="min-w-[1200px] w-full text-sm text-gray-700">
+                            <thead class="sticky top-[70px] bg-[#F7F7FD] z-20">
+                                <tr>
+                                    <th class="p-2 border border-[#E0DEF7]">Título</th>
+                                    <th class="p-2 border border-[#E0DEF7]">Código</th>
+                                    <th class="p-2 border border-[#E0DEF7]">Tipo Anúncio</th>
+                                    <th class="p-2 border border-[#E0DEF7]">Status</th>
+                                    <th class="p-2 border border-[#E0DEF7]">Tipo Imóvel</th>
+                                    <th class="p-2 border border-[#E0DEF7]">Preço</th>
+                                    <th class="p-2 border border-[#E0DEF7]">Bairro</th>
+                                    <th class="p-2 border border-[#E0DEF7]">Cidade</th>
+                                    <th class="p-2 border border-[#E0DEF7]">Endereço</th>
+                                    <th class="p-2 border border-[#E0DEF7]">CEP</th>
+                                    <th class="p-2 border border-[#E0DEF7]">Área</th>
+                                    <th class="p-2 border border-[#E0DEF7]">Quartos</th>
+                                    <th class="p-2 border border-[#E0DEF7]">Banheiros</th>
+                                    <th class="p-2 border border-[#E0DEF7]">Vagas</th>
+                                    <th class="p-2 border border-[#E0DEF7]">Suítes</th>
+                                    <th class="p-2 border border-[#E0DEF7]">Mobiliado</th>
+                                    <th class="p-2 border border-[#E0DEF7]">Comodidades</th>
+                                    <th class="p-2 border border-[#E0DEF7]">Descrição</th>
+                                    <th class="p-2 border border-[#E0DEF7]">Imagens</th>
+                                    <th class="p-2 border border-[#E0DEF7]">Vídeos</th>
+                                    <th class="p-2 border border-[#E0DEF7]">Destaque</th>
+                                    <th class="p-2 border border-[#E0DEF7]">Remover</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mass-tbody">
+                                <!-- Linhas dinâmicas -->
+                            </tbody>
+                        </table>
+                    </form>
+                </div>
+                <!-- Modal JSON -->
+                <div id="json-modal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+                    <div class="bg-white rounded-lg p-8 w-full max-w-2xl shadow-lg">
+                        <h2 class="text-xl font-bold mb-4">Preencher imóveis por JSON</h2>
+                        <textarea id="json-input" class="w-full h-40 border border-[#E0DEF7] rounded-lg p-3 mb-4" placeholder='[
+  {"title": "Casa 1", "code": "C001", ...},
+  {"title": "Casa 2", "code": "C002", ...}
+]'></textarea>
+                        <div class="flex justify-end gap-4">
+                            <button id="json-cancel" class="btn btn-secondary">Cancelar</button>
+                            <button id="json-apply" class="btn btn-primary bg-[#142a3d] text-white">Aplicar</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Modal de preview será gerado pelo JS -->
+            </main>
+        </div>
+    </div>
+    <script type="module" src="../assets/js/modules/cadastro-massa-imoveis.js"></script>
+</body>
+</html> 
