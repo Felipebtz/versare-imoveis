@@ -644,10 +644,6 @@ app.post('/api/admin/properties', (req, res) => {
         console.log('[DEPURAÇÃO] Falha: campos obrigatórios não preenchidos');
         return res.status(400).json({ error: 'Campos obrigatórios não preenchidos' });
     }
-    if (!images || !Array.isArray(images) || images.length === 0) {
-        console.log('[DEPURAÇÃO] Falha: nenhuma imagem enviada para o imóvel');
-        return res.status(400).json({ error: 'É obrigatório adicionar pelo menos uma imagem ao imóvel.' });
-    }
 
     // Verificar se já existe um imóvel com o mesmo código
     db.get('SELECT id FROM properties WHERE code = ?', [code], (err, row) => {
@@ -833,7 +829,9 @@ app.post('/api/admin/properties/:id/images', upload.array('images', 30), (req, r
     const propertyId = req.params.id;
     const files = req.files;
 
+    console.log(`[DEPURAÇÃO] Recebendo upload de imagens para o imóvel ${propertyId}. Quantidade de arquivos recebidos: ${files ? files.length : 0}`);
     if (!files || files.length === 0) {
+        console.log('[DEPURAÇÃO] Nenhum arquivo recebido no upload! req.files:', req.files);
         return res.status(400).json({ error: 'Nenhuma imagem enviada' });
     }
 
@@ -858,6 +856,7 @@ app.post('/api/admin/properties/:id/images', upload.array('images', 30), (req, r
 
             insertImageStmt.run(propertyId, imageUrl, isMain);
             imageRecords.push({ url: imageUrl, isMain });
+            console.log(`[DEPURAÇÃO] Imagem associada ao imóvel ${propertyId}: ${imageUrl}`);
         });
 
         insertImageStmt.finalize();
@@ -1841,6 +1840,23 @@ app.delete('/api/admin/properties/:propertyId/images/:imageId', (req, res) => {
             res.json({ success: true, message: 'Imagem excluída com sucesso!' });
         });
     });
+});
+
+// Associar imagens já existentes a um imóvel
+app.post('/api/admin/properties/:id/associate-images', (req, res) => {
+    const propertyId = req.params.id;
+    const images = req.body.images;
+    if (!images || !Array.isArray(images) || images.length === 0) {
+        return res.status(400).json({ error: 'Nenhuma imagem fornecida para associação.' });
+    }
+    // Inserir registros de imagens no banco
+    const insertImageStmt = db.prepare('INSERT INTO property_images (property_id, image_url, is_main) VALUES (?, ?, ?)');
+    images.forEach((img, idx) => {
+        insertImageStmt.run(propertyId, img.url, idx === 0 ? 1 : 0);
+        console.log(`[DEPURAÇÃO] Imagem associada via associação ao imóvel ${propertyId}: ${img.url}`);
+    });
+    insertImageStmt.finalize();
+    res.json({ success: true, message: 'Imagens associadas ao imóvel com sucesso!' });
 });
 
 // Iniciar o servidor

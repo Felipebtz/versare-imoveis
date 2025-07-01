@@ -327,7 +327,30 @@ async function checkCodeExists(code) {
   }
 }
 
-// Enviar formulário de imóvel (novo ou edição)
+// Função utilitária para delay
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Função para mostrar/atualizar o modal de progresso
+function showProgressModal(status, percent, done = false) {
+  const modal = document.getElementById('progress-modal');
+  const bar = document.getElementById('progress-bar');
+  const statusText = document.getElementById('progress-status');
+  const closeBtn = document.getElementById('close-progress-btn');
+  if (!modal || !bar || !statusText) return;
+  modal.classList.remove('hidden');
+  bar.style.width = percent + '%';
+  statusText.textContent = status;
+  if (done) {
+    closeBtn.classList.remove('hidden');
+    closeBtn.onclick = () => modal.classList.add('hidden');
+  } else {
+    closeBtn.classList.add('hidden');
+  }
+}
+
+// Função principal de cadastro/edição em etapas
 async function handlePropertyForm(event) {
   event.preventDefault();
   const form = event.target;
@@ -378,7 +401,7 @@ async function handlePropertyForm(event) {
     return;
   }
 
-  // NOVO: Verificar código duplicado antes de enviar
+  // NOVO: Verificar código duplicado antes de enviar (apenas para cadastro)
   if (!isEditing) {
     const codeExists = await checkCodeExists(formData.code);
     if (codeExists) {
@@ -388,16 +411,12 @@ async function handlePropertyForm(event) {
     }
   }
 
-  // NOVO: Só permitir cadastro se houver imagens confirmadas
+  // NOVO: Só permitir cadastro/edição se houver imagens confirmadas
   const confirmedImages = getConfirmedImages();
-  if (!isEditing && (!confirmedImages || confirmedImages.length === 0)) {
+  if ((!confirmedImages || confirmedImages.length === 0)) {
     showAlert('Adicione e confirme as imagens antes de salvar o imóvel.', 'error');
     console.log('[DEPURAÇÃO] Falha: nenhuma imagem confirmada para o imóvel');
     return;
-  }
-  if (!isEditing) {
-    formData.images = confirmedImages;
-    console.log(`[DEPURAÇÃO] Imagens confirmadas para cadastro:`, confirmedImages);
   }
 
   // Desabilitar o botão de envio
@@ -407,164 +426,82 @@ async function handlePropertyForm(event) {
     submitButton.textContent = isEditing ? 'Atualizando...' : 'Salvando...';
   }
 
-  // Cadastro normal (agora já com imagens confirmadas)
-  if (!isEditing) {
-    console.log('[DEPURAÇÃO] Payload enviado para o backend:', formData);
-    fetch(`${API_BASE_URL}/admin/properties`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(formData)
-    })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Erro ao adicionar imóvel');
-        }
-        return response.json();
-      })
-      .then(data => {
-        showAlert('Imóvel e imagens adicionados com sucesso', 'success');
-        console.log('[DEPURAÇÃO] Imóvel cadastrado com sucesso:', data);
-        setTimeout(() => {
-          window.location.href = 'imoveis.html';
-        }, 1500);
-      })
-      .catch(error => {
-        showAlert('Erro ao cadastrar imóvel: ' + error.message, 'error');
-        console.log('[DEPURAÇÃO] Erro ao cadastrar imóvel:', error);
-        if (submitButton) {
-          submitButton.disabled = false;
-          submitButton.textContent = 'Adicionar Imóvel';
-        }
+  // --- ETAPA 1: Enviar dados principais do imóvel ---
+  showProgressModal(isEditing ? 'Enviando dados da edição...' : 'Enviando dados do imóvel...', 5);
+  let propertyIdCreated = propertyId;
+  try {
+    let response;
+    if (!isEditing) {
+      response = await fetch(`${API_BASE_URL}/admin/properties`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, images: [] })
       });
+      if (!response.ok) throw new Error('Erro ao cadastrar imóvel');
+      const data = await response.json();
+      propertyIdCreated = data.id;
+      console.log('[DEPURAÇÃO] Imóvel cadastrado, ID:', propertyIdCreated);
+    } else {
+      // Atualização de imóvel (sem imagens)
+      response = await fetch(`${API_BASE_URL}/admin/properties/${propertyId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      if (!response.ok) throw new Error('Erro ao atualizar imóvel');
+      console.log('[DEPURAÇÃO] Imóvel atualizado:', propertyId);
+    }
+  } catch (err) {
+    showProgressModal('Erro ao salvar imóvel: ' + err.message, 0, true);
+    showAlert('Erro ao salvar imóvel: ' + err.message, 'error');
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.textContent = isEditing ? 'Atualizar Imóvel' : 'Adicionar Imóvel';
+    }
     return;
   }
-  
-  // Definir método e URL baseado se é edição ou criação
-  const method = isEditing ? 'PUT' : 'POST';
-  const url = isEditing 
-    ? `${API_BASE_URL}/admin/properties/${propertyId}` 
-    : `${API_BASE_URL}/admin/properties`;
-  
-  // Enviar para a API
-  fetch(url, {
-    method: method,
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(formData)
-  })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(isEditing ? 'Erro ao atualizar imóvel' : 'Erro ao adicionar imóvel');
-      }
-      return response.json();
-    })
-    .then(data => {
-      // Após salvar com sucesso, enviar as imagens
-      const savedPropertyId = isEditing ? propertyId : data.id;
-      
-      // Verificar se há imagens para enviar
-      const imageInput = document.getElementById('property-images');
-      let hasImages = imageInput && imageInput.files.length > 0;
-      
-      // Verificar se há vídeos para enviar
-      let hasVideos = false;
-      if (window.pendingVideos && Array.isArray(window.pendingVideos)) {
-        hasVideos = window.pendingVideos.length > 0;
-        console.log(`Verificando vídeos pendentes: ${window.pendingVideos.length}`);
-      }
-      
-      // Se tiver imagens e vídeos, enviar ambos
-      if (hasImages && hasVideos) {
-        // Mostrar mensagem de que está enviando imagens
-        showAlert('Enviando imagens e vídeos...', 'info');
-        
-        // Chamar função para upload de imagens e depois de vídeos
-        return uploadPropertyImages(savedPropertyId)
-          .then(() => saveVideos(savedPropertyId))
-          .then(() => {
-            showAlert(isEditing ? 'Imóvel, imagens e vídeos atualizados com sucesso' : 'Imóvel, imagens e vídeos adicionados com sucesso', 'success');
-            // Redirecionar após sucesso
-            setTimeout(() => {
-              window.location.href = 'imoveis.html';
-            }, 1500);
-          })
-          .catch(error => {
-            console.error('Erro ao enviar mídias:', error);
-            showAlert('Imóvel salvo, mas houve um erro ao enviar as mídias', 'warning');
-            // Ainda redireciona mesmo com erro nas mídias
-            setTimeout(() => {
-              window.location.href = 'imoveis.html';
-            }, 1500);
-          });
-      } 
-      // Se tiver apenas imagens
-      else if (hasImages) {
-        // Mostrar mensagem de que está enviando imagens
-        showAlert('Enviando imagens...', 'info');
-        
-        // Chamar função para upload de imagens
-        return uploadPropertyImages(savedPropertyId)
-          .then(() => {
-            showAlert(isEditing ? 'Imóvel e imagens atualizados com sucesso' : 'Imóvel e imagens adicionados com sucesso', 'success');
-            // Redirecionar após sucesso
-            setTimeout(() => {
-              window.location.href = 'imoveis.html';
-            }, 1500);
-          })
-          .catch(error => {
-            console.error('Erro ao enviar imagens:', error);
-            showAlert('Imóvel salvo, mas houve um erro ao enviar as imagens', 'warning');
-            // Ainda redireciona mesmo com erro nas imagens
-            setTimeout(() => {
-              window.location.href = 'imoveis.html';
-            }, 1500);
-          });
-      }
-      // Se tiver apenas vídeos
-      else if (hasVideos) {
-        // Mostrar mensagem de que está enviando vídeos
-        showAlert('Enviando vídeos...', 'info');
-        
-        // Chamar função para upload de vídeos
-        return saveVideos(savedPropertyId)
-          .then(() => {
-            showAlert(isEditing ? 'Imóvel e vídeos atualizados com sucesso' : 'Imóvel e vídeos adicionados com sucesso', 'success');
-            // Redirecionar após sucesso
-            setTimeout(() => {
-              window.location.href = 'imoveis.html';
-            }, 1500);
-          })
-          .catch(error => {
-            console.error('Erro ao enviar vídeos:', error);
-            showAlert('Imóvel salvo, mas houve um erro ao enviar os vídeos', 'warning');
-            // Ainda redireciona mesmo com erro nos vídeos
-            setTimeout(() => {
-              window.location.href = 'imoveis.html';
-            }, 1500);
-          });
-      } else {
-        // Se não há mídias para enviar
-        showAlert(isEditing ? 'Imóvel atualizado com sucesso' : 'Imóvel adicionado com sucesso', 'success');
-        
-        // Redirecionar para a lista de imóveis após um breve delay
-        setTimeout(() => {
-          window.location.href = 'imoveis.html';
-        }, 1500);
-      }
-    })
-    .catch(error => {
-      console.error('Erro ao salvar imóvel:', error);
-      showAlert(error.message, 'error');
-      
-      // Reabilitar o botão
-      if (submitButton) {
-        submitButton.disabled = false;
-        submitButton.textContent = isEditing ? 'Atualizar Imóvel' : 'Adicionar Imóvel';
-      }
+
+  // --- ETAPA 2: Associar imagens já enviadas ao imóvel ---
+  showProgressModal('Associando imagens ao imóvel...', 10);
+  try {
+    const resAssoc = await fetch(`${API_BASE_URL}/admin/properties/${propertyIdCreated}/associate-images`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ images: confirmedImages })
     });
+    if (!resAssoc.ok) throw new Error('Falha ao associar imagens ao imóvel');
+    showProgressModal('Imagens associadas ao imóvel!', 90);
+    console.log('[DEPURAÇÃO] Imagens associadas ao imóvel via API:', confirmedImages);
+    await sleep(600);
+  } catch (err) {
+    showProgressModal('Erro ao associar imagens: ' + err.message, 90, true);
+    showAlert('Erro ao associar imagens ao imóvel: ' + err.message, 'error');
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.textContent = isEditing ? 'Atualizar Imóvel' : 'Adicionar Imóvel';
+    }
+    return;
+  }
+
+  // --- ETAPA FINAL: Sucesso ---
+  // Buscar imagens associadas ao imóvel para depuração
+  try {
+    const resImgs = await fetch(`${API_BASE_URL}/admin/properties/${propertyIdCreated}/images`);
+    if (resImgs.ok) {
+      const imgs = await resImgs.json();
+      console.log('[DEPURAÇÃO] Imagens associadas ao imóvel após upload:', imgs.images);
+      if (!imgs.images || imgs.images.length === 0) {
+        showAlert('Atenção: Nenhuma imagem foi associada ao imóvel. Verifique o upload!', 'warning');
+      }
+    }
+  } catch (e) {
+    console.log('[DEPURAÇÃO] Falha ao buscar imagens associadas ao imóvel:', e);
+  }
+  showProgressModal(isEditing ? 'Edição finalizada com sucesso!' : 'Cadastro finalizado com sucesso!', 100, true);
+  showAlert(isEditing ? 'Imóvel e imagens atualizados com sucesso!' : 'Imóvel e imagens adicionados com sucesso!', 'success');
+  setTimeout(() => {
+    window.location.href = 'imoveis.html';
+  }, 1500);
 }
 
 // Carregar detalhes de um imóvel para edição
