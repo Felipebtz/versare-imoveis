@@ -13,8 +13,8 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: '1024mb' }));
+app.use(bodyParser.urlencoded({ limit: '1024mb', extended: true }));
 
 // Servir arquivos estáticos
 app.use(express.static(path.join(__dirname, 'src')));
@@ -40,9 +40,9 @@ const storage = multer.diskStorage({
 const upload = multer({ 
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB por arquivo
-    files: 30, // máximo de 30 arquivos
-    fieldSize: 30 * 1024 * 1024 // 30MB no total (para campos não arquivos, mas ajuda a limitar)
+    fileSize: 10 * 1024 * 1024, // 10MB por arquivo
+    files: 100, // até 100 arquivos
+    fieldSize: 1024 * 1024 * 1024 // 1GB no total
   },
   fileFilter: (req, file, cb) => {
     if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.mimetype)) {
@@ -56,13 +56,13 @@ const upload = multer({
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ error: 'Uma ou mais imagens excedem o tamanho máximo de 5MB.' });
+      return res.status(400).json({ error: 'Uma ou mais imagens excedem o tamanho máximo de 10MB.' });
     }
     if (err.code === 'LIMIT_FILE_COUNT') {
-      return res.status(400).json({ error: 'Você pode enviar no máximo 30 imagens por imóvel.' });
+      return res.status(400).json({ error: 'Você pode enviar no máximo 100 imagens por imóvel.' });
     }
     if (err.code === 'LIMIT_FIELD_SIZE') {
-      return res.status(400).json({ error: 'O tamanho total das imagens não pode ultrapassar 30MB.' });
+      return res.status(400).json({ error: 'O tamanho total das imagens não pode ultrapassar 1GB.' });
     }
     return res.status(400).json({ error: 'Erro no upload de imagens: ' + err.message });
   } else if (err) {
